@@ -110,15 +110,43 @@ export class ComprehensiveCostCalculator {
       baseCost *= pricing.windows_multiplier;
     }
 
+    // Boot volume cost
+    let bootVolumeCost = 0;
+    if (req.compute.bootVolume) {
+      const storagePricing = this.pricing.storage[provider as keyof typeof this.pricing.storage];
+      let volumePrice = 0;
+      
+      // Map boot volume types to storage pricing keys
+      const storageTypeMap: Record<string, string> = {
+        'ssd-gp3': 'ssd-gp3',
+        'ssd-gp2': 'ssd-gp3', // Map gp2 to gp3 pricing
+        'ssd-io2': 'ssd-io2',
+        'hdd-standard': 'hdd-st1'
+      };
+      
+      const storageType = storageTypeMap[req.compute.bootVolume.type] || 'ssd-gp3';
+      volumePrice = storagePricing.block[storageType as keyof typeof storagePricing.block] || 0.08;
+      
+      bootVolumeCost = req.compute.bootVolume.size * volumePrice;
+      
+      // Add IOPS cost for io2 volumes
+      if (req.compute.bootVolume.type === 'ssd-io2' && req.compute.bootVolume.iops > 3000) {
+        const extraIops = req.compute.bootVolume.iops - 3000;
+        const iopsCost = storagePricing.block.iops || 0.005;
+        bootVolumeCost += extraIops * iopsCost;
+      }
+    }
+
     // Serverless functions
     let serverlessCost = 0;
     if (req.compute.serverless) {
-      const requestCost = req.compute.serverless.functions * (pricing.lambda_per_request || pricing.functions_per_request || pricing.cloud_functions_per_request || 0.0000002);
-      const executionCost = req.compute.serverless.functions * req.compute.serverless.executionTime * (pricing.lambda_per_gb_second || pricing.functions_per_gb_second || 0.0000166667);
+      const pricingAny = pricing as any;
+      const requestCost = req.compute.serverless.functions * (pricingAny.lambda_per_request || pricingAny.functions_per_request || pricingAny.cloud_functions_per_request || 0.0000002);
+      const executionCost = req.compute.serverless.functions * req.compute.serverless.executionTime * (pricingAny.lambda_per_gb_second || pricingAny.functions_per_gb_second || 0.0000166667);
       serverlessCost = requestCost + executionCost;
     }
 
-    return (baseCost + serverlessCost) * regionMultiplier;
+    return (baseCost + bootVolumeCost + serverlessCost) * regionMultiplier;
   }
 
   private calculateStorage(provider: string, req: InfrastructureRequirements): number {

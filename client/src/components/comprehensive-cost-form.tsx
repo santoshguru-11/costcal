@@ -27,6 +27,11 @@ export default function ComprehensiveCostForm() {
         instanceType: "general-purpose",
         region: "us-east-1",
         operatingSystem: "linux",
+        bootVolume: {
+          size: 30,
+          type: "ssd-gp3",
+          iops: 3000,
+        },
         serverless: {
           functions: 0,
           executionTime: 1,
@@ -431,6 +436,74 @@ export default function ComprehensiveCostForm() {
                         </FormItem>
                       )}
                     />
+                  </div>
+
+                  {/* Boot Volume Configuration */}
+                  <div className="space-y-4">
+                    <h4 className="text-md font-semibold">Boot Volume Storage</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="compute.bootVolume.size"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Boot Volume Size (GB)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="30"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 30)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="compute.bootVolume.type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Volume Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select volume type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="ssd-gp3">SSD GP3 (General Purpose)</SelectItem>
+                                <SelectItem value="ssd-gp2">SSD GP2 (Previous Gen)</SelectItem>
+                                <SelectItem value="ssd-io2">SSD IO2 (High IOPS)</SelectItem>
+                                <SelectItem value="hdd-standard">HDD Standard</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="compute.bootVolume.iops"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>IOPS (for IO2)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="3000"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 3000)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
 
                   {/* Serverless Section */}

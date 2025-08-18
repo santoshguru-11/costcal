@@ -27,6 +27,11 @@ export const infrastructureRequirementsSchema = z.object({
     instanceType: z.enum(['general-purpose', 'compute-optimized', 'memory-optimized', 'storage-optimized']),
     region: z.string().min(1),
     operatingSystem: z.enum(['linux', 'windows']).default('linux'),
+    bootVolume: z.object({
+      size: z.number().min(8).max(1024).default(30), // GB, minimum 8GB for OS
+      type: z.enum(['ssd-gp3', 'ssd-gp2', 'ssd-io2', 'hdd-standard']).default('ssd-gp3'),
+      iops: z.number().min(100).max(16000).default(3000), // only applicable for io2
+    }),
     serverless: z.object({
       functions: z.number().min(0).max(1000000).default(0),
       executionTime: z.number().min(0).max(15).default(1), // minutes
