@@ -467,6 +467,206 @@
       "transcoding_per_minute": { "standard": 0.005063, "hd": 0.01148, "4k": 0.04590 }
     }
   },
+  "quantum": {
+    "aws": {
+      "qpu_hour": 25.00,
+      "algorithm_complexity": { "basic": 1.0, "intermediate": 1.5, "advanced": 2.5 },
+      "circuit_optimization": 0.10
+    },
+    "azure": {
+      "qpu_hour": 23.50,
+      "algorithm_complexity": { "basic": 1.0, "intermediate": 1.4, "advanced": 2.3 },
+      "circuit_optimization": 0.095
+    },
+    "gcp": {
+      "qpu_hour": 22.00,
+      "algorithm_complexity": { "basic": 1.0, "intermediate": 1.3, "advanced": 2.0 },
+      "circuit_optimization": 0.08
+    },
+    "oracle": {
+      "qpu_hour": 20.50,
+      "algorithm_complexity": { "basic": 1.0, "intermediate": 1.2, "advanced": 1.8 },
+      "circuit_optimization": 0.075
+    }
+  },
+  "advancedAI": {
+    "aws": {
+      "vector_db_per_million_dims": 2.50,
+      "vector_queries_per_million": 0.75,
+      "tpu_per_hour": 8.00,
+      "inference_chips_per_hour": 12.00,
+      "model_hosting_per_model": 15.00,
+      "inference_per_million_requests": 2.00,
+      "document_processing_per_1k": 0.15,
+      "embeddings_per_million": 0.40
+    },
+    "azure": {
+      "vector_db_per_million_dims": 2.25,
+      "vector_queries_per_million": 0.68,
+      "tpu_per_hour": 7.20,
+      "inference_chips_per_hour": 10.80,
+      "model_hosting_per_model": 13.50,
+      "inference_per_million_requests": 1.80,
+      "document_processing_per_1k": 0.135,
+      "embeddings_per_million": 0.36
+    },
+    "gcp": {
+      "vector_db_per_million_dims": 1.75,
+      "vector_queries_per_million": 0.52,
+      "tpu_per_hour": 5.50,
+      "inference_chips_per_hour": 8.25,
+      "model_hosting_per_model": 10.50,
+      "inference_per_million_requests": 1.40,
+      "document_processing_per_1k": 0.105,
+      "embeddings_per_million": 0.28
+    },
+    "oracle": {
+      "vector_db_per_million_dims": 1.58,
+      "vector_queries_per_million": 0.47,
+      "tpu_per_hour": 4.95,
+      "inference_chips_per_hour": 7.43,
+      "model_hosting_per_model": 9.45,
+      "inference_per_million_requests": 1.26,
+      "document_processing_per_1k": 0.095,
+      "embeddings_per_million": 0.25
+    }
+  },
+  "edge": {
+    "aws": {
+      "edge_location": 50.00,
+      "edge_compute_per_hour": 0.15,
+      "5g_network_slice": 500.00,
+      "private_5g_network": 2500.00,
+      "realtime_events_per_million": 1.20
+    },
+    "azure": {
+      "edge_location": 45.00,
+      "edge_compute_per_hour": 0.135,
+      "5g_network_slice": 450.00,
+      "private_5g_network": 2250.00,
+      "realtime_events_per_million": 1.08
+    },
+    "gcp": {
+      "edge_location": 38.00,
+      "edge_compute_per_hour": 0.114,
+      "5g_network_slice": 380.00,
+      "private_5g_network": 1900.00,
+      "realtime_events_per_million": 0.91
+    },
+    "oracle": {
+      "edge_location": 34.20,
+      "edge_compute_per_hour": 0.103,
+      "5g_network_slice": 342.00,
+      "private_5g_network": 1710.00,
+      "realtime_events_per_million": 0.82
+    }
+  },
+  "confidential": {
+    "aws": {
+      "secure_enclave_per_hour": 0.25,
+      "trusted_execution_per_hour": 0.18,
+      "privacy_operations_per_million": 3.50,
+      "zero_trust_per_gb": 0.085
+    },
+    "azure": {
+      "secure_enclave_per_hour": 0.225,
+      "trusted_execution_per_hour": 0.162,
+      "privacy_operations_per_million": 3.15,
+      "zero_trust_per_gb": 0.077
+    },
+    "gcp": {
+      "secure_enclave_per_hour": 0.19,
+      "trusted_execution_per_hour": 0.137,
+      "privacy_operations_per_million": 2.66,
+      "zero_trust_per_gb": 0.065
+    },
+    "oracle": {
+      "secure_enclave_per_hour": 0.171,
+      "trusted_execution_per_hour": 0.123,
+      "privacy_operations_per_million": 2.39,
+      "zero_trust_per_gb": 0.058
+    }
+  },
+  "sustainability": {
+    "aws": {
+      "carbon_tracking": 5.00,
+      "renewable_energy_premium": 1.08,
+      "green_optimization": 0.95,
+      "carbon_offset_per_ton": 15.00,
+      "co2_per_kwh": 0.000233,
+      "renewable_percent": 86
+    },
+    "azure": {
+      "carbon_tracking": 4.50,
+      "renewable_energy_premium": 1.05,
+      "green_optimization": 0.92,
+      "carbon_offset_per_ton": 13.50,
+      "co2_per_kwh": 0.000198,
+      "renewable_percent": 93
+    },
+    "gcp": {
+      "carbon_tracking": 0.00,
+      "renewable_energy_premium": 1.00,
+      "green_optimization": 0.88,
+      "carbon_offset_per_ton": 12.00,
+      "co2_per_kwh": 0.000000,
+      "renewable_percent": 100
+    },
+    "oracle": {
+      "carbon_tracking": 4.05,
+      "renewable_energy_premium": 1.03,
+      "green_optimization": 0.89,
+      "carbon_offset_per_ton": 10.80,
+      "co2_per_kwh": 0.000179,
+      "renewable_percent": 95
+    }
+  },
+  "scenarios": {
+    "aws": {
+      "disaster_recovery_base": 100.00,
+      "dr_rto_multiplier": { "1": 3.0, "4": 2.5, "24": 2.0, "72": 1.5, "168": 1.0 },
+      "dr_rpo_multiplier": { "15": 2.5, "60": 2.0, "240": 1.5, "720": 1.2, "1440": 1.0 },
+      "compliance_premiums": { "gdpr": 0.15, "hipaa": 0.25, "sox": 0.20, "pci": 0.18, "iso27001": 0.12 },
+      "audit_logging_per_gb": 0.75,
+      "data_residency_premium": { "us": 1.0, "eu": 1.15, "asia": 1.12, "global": 1.0 },
+      "migration_base_cost": 2500.00,
+      "migration_per_tb": 150.00,
+      "complexity_multiplier": { "simple": 1.0, "moderate": 1.8, "complex": 3.2 }
+    },
+    "azure": {
+      "disaster_recovery_base": 90.00,
+      "dr_rto_multiplier": { "1": 2.8, "4": 2.3, "24": 1.8, "72": 1.4, "168": 0.9 },
+      "dr_rpo_multiplier": { "15": 2.3, "60": 1.8, "240": 1.4, "720": 1.1, "1440": 0.9 },
+      "compliance_premiums": { "gdpr": 0.135, "hipaa": 0.225, "sox": 0.18, "pci": 0.162, "iso27001": 0.108 },
+      "audit_logging_per_gb": 0.675,
+      "data_residency_premium": { "us": 1.0, "eu": 1.10, "asia": 1.08, "global": 1.0 },
+      "migration_base_cost": 2250.00,
+      "migration_per_tb": 135.00,
+      "complexity_multiplier": { "simple": 0.9, "moderate": 1.6, "complex": 2.9 }
+    },
+    "gcp": {
+      "disaster_recovery_base": 75.00,
+      "dr_rto_multiplier": { "1": 2.3, "4": 1.9, "24": 1.5, "72": 1.2, "168": 0.8 },
+      "dr_rpo_multiplier": { "15": 1.9, "60": 1.5, "240": 1.2, "720": 1.0, "1440": 0.8 },
+      "compliance_premiums": { "gdpr": 0.11, "hipaa": 0.19, "sox": 0.15, "pci": 0.135, "iso27001": 0.09 },
+      "audit_logging_per_gb": 0.57,
+      "data_residency_premium": { "us": 1.0, "eu": 1.08, "asia": 1.05, "global": 1.0 },
+      "migration_base_cost": 1875.00,
+      "migration_per_tb": 112.50,
+      "complexity_multiplier": { "simple": 0.75, "moderate": 1.35, "complex": 2.4 }
+    },
+    "oracle": {
+      "disaster_recovery_base": 67.50,
+      "dr_rto_multiplier": { "1": 2.1, "4": 1.7, "24": 1.4, "72": 1.1, "168": 0.7 },
+      "dr_rpo_multiplier": { "15": 1.7, "60": 1.4, "240": 1.1, "720": 0.9, "1440": 0.7 },
+      "compliance_premiums": { "gdpr": 0.099, "hipaa": 0.171, "sox": 0.135, "pci": 0.122, "iso27001": 0.081 },
+      "audit_logging_per_gb": 0.513,
+      "data_residency_premium": { "us": 1.0, "eu": 1.05, "asia": 1.03, "global": 1.0 },
+      "migration_base_cost": 1687.50,
+      "migration_per_tb": 101.25,
+      "complexity_multiplier": { "simple": 0.68, "moderate": 1.22, "complex": 2.16 }
+    }
+  },
   "regions": {
     "us-east-1": { "multiplier": 1.0, "name": "US East (N. Virginia)" },
     "us-west-2": { "multiplier": 1.05, "name": "US West (Oregon)" },

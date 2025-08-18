@@ -221,6 +221,66 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     ))}
                   </TableRow>
                 )}
+                {results.providers[0].quantum !== undefined && (
+                  <TableRow>
+                    <TableCell className="font-medium">Quantum Computing</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.quantum || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].advancedAI !== undefined && (
+                  <TableRow className="bg-slate-50">
+                    <TableCell className="font-medium">Advanced AI/ML</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.advancedAI || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].edge !== undefined && (
+                  <TableRow>
+                    <TableCell className="font-medium">Edge & 5G</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.edge || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].confidential !== undefined && (
+                  <TableRow className="bg-slate-50">
+                    <TableCell className="font-medium">Confidential Computing</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.confidential || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].sustainability !== undefined && (
+                  <TableRow>
+                    <TableCell className="font-medium">Sustainability Services</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.sustainability || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].scenarios !== undefined && (
+                  <TableRow className="bg-slate-50">
+                    <TableCell className="font-medium">Advanced Scenarios</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.scenarios || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
                 <TableRow className="bg-primary/5 font-semibold">
                   <TableCell className="font-bold">Total Monthly Cost</TableCell>
                   {results.providers.map((provider) => (
@@ -229,6 +289,27 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     </TableCell>
                   ))}
                 </TableRow>
+                {/* Sustainability Metrics Row */}
+                {results.providers[0].carbonFootprint !== undefined && (
+                  <TableRow className="bg-green-50 border-t-2 border-green-200">
+                    <TableCell className="font-bold text-green-800">🌱 Carbon Footprint (tons CO2/mo)</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className="font-medium text-green-700">
+                        {provider.carbonFootprint?.toFixed(3) || 'N/A'}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].renewableEnergyPercent !== undefined && (
+                  <TableRow className="bg-green-50">
+                    <TableCell className="font-bold text-green-800">🔋 Renewable Energy %</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className="font-medium text-green-700">
+                        {provider.renewableEnergyPercent || 'N/A'}%
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

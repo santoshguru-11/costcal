@@ -199,6 +199,92 @@ export const infrastructureRequirementsSchema = z.object({
       inputFormat: z.enum(['standard', 'hd', '4k']).default('standard'),
     }),
   }),
+  
+  // Quantum Computing Services
+  quantum: z.object({
+    processingUnits: z.number().min(0).max(1000).default(0), // QPU hours per month
+    quantumAlgorithms: z.enum(['optimization', 'simulation', 'cryptography', 'ml']).default('optimization'),
+    circuitComplexity: z.enum(['basic', 'intermediate', 'advanced']).default('basic'),
+  }),
+  
+  // Advanced AI/ML Platform Services
+  advancedAI: z.object({
+    vectorDatabase: z.object({
+      dimensions: z.number().min(0).max(10000000).default(0), // vector dimensions stored
+      queries: z.number().min(0).max(100000000).default(0), // queries per month
+    }),
+    customChips: z.object({
+      tpuHours: z.number().min(0).max(100000).default(0), // TPU hours per month
+      inferenceChips: z.number().min(0).max(100000).default(0), // specialized chip hours
+    }),
+    modelHosting: z.object({
+      models: z.number().min(0).max(1000).default(0), // number of models hosted
+      requests: z.number().min(0).max(1000000000).default(0), // inference requests per month
+    }),
+    ragPipelines: z.object({
+      documents: z.number().min(0).max(10000000).default(0), // documents processed
+      embeddings: z.number().min(0).max(100000000).default(0), // embeddings generated per month
+    }),
+  }),
+  
+  // Edge Computing & 5G Services
+  edge: z.object({
+    edgeLocations: z.number().min(0).max(10000).default(0), // number of edge locations
+    edgeCompute: z.number().min(0).max(100000).default(0), // edge compute hours per month
+    fiveGNetworking: z.object({
+      networkSlices: z.number().min(0).max(1000).default(0), // 5G network slices
+      privateNetworks: z.number().min(0).max(100).default(0), // private 5G networks
+    }),
+    realTimeProcessing: z.number().min(0).max(1000000).default(0), // real-time events per month
+  }),
+  
+  // Confidential Computing
+  confidential: z.object({
+    secureEnclaves: z.number().min(0).max(10000).default(0), // secure enclave hours per month
+    trustedExecution: z.number().min(0).max(100000).default(0), // trusted execution hours
+    privacyPreservingAnalytics: z.number().min(0).max(1000000).default(0), // operations per month
+    zeroTrustProcessing: z.number().min(0).max(100000).default(0), // GB processed per month
+  }),
+  
+  // Sustainability & Green Computing
+  sustainability: z.object({
+    carbonFootprintTracking: z.boolean().default(false),
+    renewableEnergyPreference: z.boolean().default(false),
+    greenCloudOptimization: z.boolean().default(false),
+    carbonOffsetCredits: z.number().min(0).max(100000).default(0), // tons CO2 offset
+  }),
+  
+  // Advanced Scenarios
+  scenarios: z.object({
+    disasterRecovery: z.object({
+      enabled: z.boolean().default(false),
+      rtoHours: z.number().min(1).max(168).default(24), // Recovery Time Objective
+      rpoMinutes: z.number().min(15).max(1440).default(240), // Recovery Point Objective
+      backupRegions: z.number().min(1).max(10).default(1),
+    }),
+    compliance: z.object({
+      frameworks: z.array(z.enum(['gdpr', 'hipaa', 'sox', 'pci', 'iso27001'])).default([]),
+      auditLogging: z.boolean().default(false),
+      dataResidency: z.enum(['us', 'eu', 'asia', 'global']).default('global'),
+    }),
+    migration: z.object({
+      sourceProvider: z.enum(['aws', 'azure', 'gcp', 'oracle', 'on-premise']).optional(),
+      dataToMigrate: z.number().min(0).max(1000000).default(0), // TB
+      applicationComplexity: z.enum(['simple', 'moderate', 'complex']).default('moderate'),
+    }),
+  }),
+  
+  // Cost Optimization Preferences
+  optimization: z.object({
+    reservedInstanceStrategy: z.enum(['none', 'conservative', 'moderate', 'aggressive']).default('moderate'),
+    spotInstanceTolerance: z.number().min(0).max(100).default(10), // percentage of workload suitable for spot
+    autoScalingAggression: z.enum(['minimal', 'moderate', 'aggressive']).default('moderate'),
+    costAlerts: z.object({
+      enabled: z.boolean().default(true),
+      thresholdPercent: z.number().min(5).max(100).default(20), // alert when cost exceeds budget by %
+      notificationPreference: z.enum(['email', 'slack', 'webhook']).default('email'),
+    }),
+  }),
 });
 
 export type InfrastructureRequirements = z.infer<typeof infrastructureRequirementsSchema>;
@@ -217,7 +303,15 @@ export interface CloudProvider {
   backup?: number;
   iot?: number;
   media?: number;
+  quantum?: number;
+  advancedAI?: number;
+  edge?: number;
+  confidential?: number;
+  sustainability?: number;
+  scenarios?: number;
   total: number;
+  carbonFootprint?: number; // CO2 tons per month
+  renewableEnergyPercent?: number; // percentage renewable energy
 }
 
 export interface CostCalculationResult {

@@ -25,9 +25,24 @@ export class ComprehensiveCostCalculator {
         backup: this.calculateBackup(provider, requirements),
         iot: this.calculateIoT(provider, requirements, regionMultiplier),
         media: this.calculateMedia(provider, requirements, regionMultiplier),
+        quantum: this.calculateQuantum(provider, requirements, regionMultiplier),
+        advancedAI: this.calculateAdvancedAI(provider, requirements, regionMultiplier),
+        edge: this.calculateEdge(provider, requirements, regionMultiplier),
+        confidential: this.calculateConfidential(provider, requirements, regionMultiplier),
+        sustainability: this.calculateSustainability(provider, requirements),
+        scenarios: this.calculateScenarios(provider, requirements, regionMultiplier),
       };
 
-      const total = Object.values(costs).reduce((sum, cost) => sum + cost, 0);
+      // Apply optimization adjustments
+      const optimizationMultiplier = this.calculateOptimizationMultiplier(provider, requirements);
+      const sustainabilityMultiplier = this.getSustainabilityMultiplier(provider, requirements);
+      
+      const baseCost = Object.values(costs).reduce((sum, cost) => sum + cost, 0);
+      const total = baseCost * optimizationMultiplier * sustainabilityMultiplier;
+      
+      // Calculate carbon footprint and renewable energy
+      const carbonFootprint = this.calculateCarbonFootprint(provider, total);
+      const renewablePercent = this.getRenewableEnergyPercent(provider);
 
       results.push({
         name: provider.toUpperCase(),
@@ -45,6 +60,16 @@ export class ComprehensiveCostCalculator {
         backup: Math.round(costs.backup * 100) / 100,
         iot: Math.round(costs.iot * 100) / 100,
         media: Math.round(costs.media * 100) / 100,
+        // Add new advanced services
+        quantum: Math.round(costs.quantum * 100) / 100,
+        advancedAI: Math.round(costs.advancedAI * 100) / 100,
+        edge: Math.round(costs.edge * 100) / 100,
+        confidential: Math.round(costs.confidential * 100) / 100,
+        sustainability: Math.round(costs.sustainability * 100) / 100,
+        scenarios: Math.round(costs.scenarios * 100) / 100,
+        // Add sustainability metrics
+        carbonFootprint: Math.round(carbonFootprint * 1000) / 1000,
+        renewableEnergyPercent: renewablePercent,
       } as CloudProvider & Record<string, number>);
     }
 
@@ -380,18 +405,214 @@ export class ComprehensiveCostCalculator {
     return totalCost * regionMultiplier;
   }
 
+  private calculateQuantum(provider: string, req: InfrastructureRequirements, regionMultiplier: number): number {
+    const pricing = this.pricing.quantum[provider as keyof typeof this.pricing.quantum];
+    let totalCost = 0;
+
+    if (req.quantum.processingUnits > 0) {
+      const complexityMultiplier = pricing.algorithm_complexity[req.quantum.circuitComplexity];
+      totalCost += req.quantum.processingUnits * pricing.qpu_hour * complexityMultiplier;
+      totalCost += req.quantum.processingUnits * pricing.circuit_optimization;
+    }
+
+    return totalCost * regionMultiplier;
+  }
+
+  private calculateAdvancedAI(provider: string, req: InfrastructureRequirements, regionMultiplier: number): number {
+    const pricing = this.pricing.advancedAI[provider as keyof typeof this.pricing.advancedAI];
+    let totalCost = 0;
+
+    // Vector Database
+    if (req.advancedAI.vectorDatabase.dimensions > 0) {
+      totalCost += (req.advancedAI.vectorDatabase.dimensions / 1000000) * pricing.vector_db_per_million_dims;
+    }
+    if (req.advancedAI.vectorDatabase.queries > 0) {
+      totalCost += (req.advancedAI.vectorDatabase.queries / 1000000) * pricing.vector_queries_per_million;
+    }
+
+    // Custom Chips
+    totalCost += req.advancedAI.customChips.tpuHours * pricing.tpu_per_hour;
+    totalCost += req.advancedAI.customChips.inferenceChips * pricing.inference_chips_per_hour;
+
+    // Model Hosting
+    totalCost += req.advancedAI.modelHosting.models * pricing.model_hosting_per_model;
+    if (req.advancedAI.modelHosting.requests > 0) {
+      totalCost += (req.advancedAI.modelHosting.requests / 1000000) * pricing.inference_per_million_requests;
+    }
+
+    // RAG Pipelines
+    if (req.advancedAI.ragPipelines.documents > 0) {
+      totalCost += (req.advancedAI.ragPipelines.documents / 1000) * pricing.document_processing_per_1k;
+    }
+    if (req.advancedAI.ragPipelines.embeddings > 0) {
+      totalCost += (req.advancedAI.ragPipelines.embeddings / 1000000) * pricing.embeddings_per_million;
+    }
+
+    return totalCost * regionMultiplier;
+  }
+
+  private calculateEdge(provider: string, req: InfrastructureRequirements, regionMultiplier: number): number {
+    const pricing = this.pricing.edge[provider as keyof typeof this.pricing.edge];
+    let totalCost = 0;
+
+    totalCost += req.edge.edgeLocations * pricing.edge_location;
+    totalCost += req.edge.edgeCompute * pricing.edge_compute_per_hour;
+    totalCost += req.edge.fiveGNetworking.networkSlices * pricing["5g_network_slice"];
+    totalCost += req.edge.fiveGNetworking.privateNetworks * pricing.private_5g_network;
+    
+    if (req.edge.realTimeProcessing > 0) {
+      totalCost += (req.edge.realTimeProcessing / 1000000) * pricing.realtime_events_per_million;
+    }
+
+    return totalCost * regionMultiplier;
+  }
+
+  private calculateConfidential(provider: string, req: InfrastructureRequirements, regionMultiplier: number): number {
+    const pricing = this.pricing.confidential[provider as keyof typeof this.pricing.confidential];
+    let totalCost = 0;
+
+    totalCost += req.confidential.secureEnclaves * pricing.secure_enclave_per_hour;
+    totalCost += req.confidential.trustedExecution * pricing.trusted_execution_per_hour;
+    
+    if (req.confidential.privacyPreservingAnalytics > 0) {
+      totalCost += (req.confidential.privacyPreservingAnalytics / 1000000) * pricing.privacy_operations_per_million;
+    }
+    
+    totalCost += req.confidential.zeroTrustProcessing * pricing.zero_trust_per_gb;
+
+    return totalCost * regionMultiplier;
+  }
+
+  private calculateSustainability(provider: string, req: InfrastructureRequirements): number {
+    const pricing = this.pricing.sustainability[provider as keyof typeof this.pricing.sustainability];
+    let totalCost = 0;
+
+    if (req.sustainability.carbonFootprintTracking) {
+      totalCost += pricing.carbon_tracking;
+    }
+
+    if (req.sustainability.greenCloudOptimization) {
+      // This is a multiplier applied later, not a direct cost
+    }
+
+    totalCost += req.sustainability.carbonOffsetCredits * pricing.carbon_offset_per_ton;
+
+    return totalCost;
+  }
+
+  private calculateScenarios(provider: string, req: InfrastructureRequirements, regionMultiplier: number): number {
+    const pricing = this.pricing.scenarios[provider as keyof typeof this.pricing.scenarios];
+    let totalCost = 0;
+
+    // Disaster Recovery
+    if (req.scenarios.disasterRecovery.enabled) {
+      totalCost += pricing.disaster_recovery_base;
+      
+      const rtoMultiplier = pricing.dr_rto_multiplier[req.scenarios.disasterRecovery.rtoHours.toString() as keyof typeof pricing.dr_rto_multiplier] || 1.0;
+      const rpoMultiplier = pricing.dr_rpo_multiplier[req.scenarios.disasterRecovery.rpoMinutes.toString() as keyof typeof pricing.dr_rpo_multiplier] || 1.0;
+      
+      totalCost *= rtoMultiplier * rpoMultiplier;
+      totalCost += (req.scenarios.disasterRecovery.backupRegions - 1) * pricing.disaster_recovery_base * 0.5;
+    }
+
+    // Compliance
+    if (req.scenarios.compliance.frameworks.length > 0) {
+      req.scenarios.compliance.frameworks.forEach(framework => {
+        const premium = pricing.compliance_premiums[framework];
+        if (premium) {
+          totalCost += 1000 * premium; // Base monthly compliance cost
+        }
+      });
+    }
+
+    if (req.scenarios.compliance.auditLogging) {
+      totalCost += 100 * pricing.audit_logging_per_gb; // Assume 100GB logs per month
+    }
+
+    // Data residency premium
+    const residencyMultiplier = pricing.data_residency_premium[req.scenarios.compliance.dataResidency];
+    totalCost *= residencyMultiplier;
+
+    // Migration
+    if (req.scenarios.migration.dataToMigrate > 0) {
+      totalCost += pricing.migration_base_cost;
+      totalCost += req.scenarios.migration.dataToMigrate * pricing.migration_per_tb;
+      
+      const complexityMultiplier = pricing.complexity_multiplier[req.scenarios.migration.applicationComplexity];
+      totalCost *= complexityMultiplier;
+    }
+
+    return totalCost * regionMultiplier;
+  }
+
+  private calculateOptimizationMultiplier(provider: string, req: InfrastructureRequirements): number {
+    let multiplier = 1.0;
+
+    // Reserved instance savings
+    const reservedSavings = {
+      none: 1.0,
+      conservative: 0.95, // 5% savings
+      moderate: 0.88, // 12% savings
+      aggressive: 0.78 // 22% savings
+    };
+    multiplier *= reservedSavings[req.optimization.reservedInstanceStrategy];
+
+    // Spot instance savings
+    const spotSavings = req.optimization.spotInstanceTolerance / 100 * 0.7; // Up to 70% savings on spot portion
+    multiplier *= (1 - spotSavings);
+
+    // Auto-scaling optimization
+    const scalingSavings = {
+      minimal: 0.98, // 2% savings
+      moderate: 0.92, // 8% savings
+      aggressive: 0.85 // 15% savings
+    };
+    multiplier *= scalingSavings[req.optimization.autoScalingAggression];
+
+    return multiplier;
+  }
+
+  private getSustainabilityMultiplier(provider: string, req: InfrastructureRequirements): number {
+    const pricing = this.pricing.sustainability[provider as keyof typeof this.pricing.sustainability];
+    let multiplier = 1.0;
+
+    if (req.sustainability.renewableEnergyPreference) {
+      multiplier *= pricing.renewable_energy_premium;
+    }
+
+    if (req.sustainability.greenCloudOptimization) {
+      multiplier *= pricing.green_optimization;
+    }
+
+    return multiplier;
+  }
+
+  private calculateCarbonFootprint(provider: string, totalCost: number): number {
+    const pricing = this.pricing.sustainability[provider as keyof typeof this.pricing.sustainability];
+    
+    // Estimate power usage based on cost (approximate formula)
+    const estimatedKwh = totalCost * 100; // Rough estimate: $1 = 100 kWh
+    
+    return estimatedKwh * pricing.co2_per_kwh;
+  }
+
+  private getRenewableEnergyPercent(provider: string): number {
+    const pricing = this.pricing.sustainability[provider as keyof typeof this.pricing.sustainability];
+    return pricing.renewable_percent;
+  }
+
   private calculateMultiCloudOptimization(providers: CloudProvider[]): { cost: number; breakdown: Record<string, string> } {
-    // Find cheapest option for each service category
-    const categories = ['compute', 'storage', 'database', 'networking'];
+    // Find cheapest option for each service category including new services
+    const categories = ['compute', 'storage', 'database', 'networking', 'analytics', 'ai', 'security', 'monitoring', 'devops', 'backup', 'iot', 'media', 'quantum', 'advancedAI', 'edge', 'confidential'];
     const breakdown: Record<string, string> = {};
     let totalCost = 0;
 
     categories.forEach(category => {
       const cheapest = providers.reduce((min, p) => 
-        p[category as keyof CloudProvider] < min[category as keyof CloudProvider] ? p : min
+        (p[category as keyof CloudProvider] || 0) < (min[category as keyof CloudProvider] || 0) ? p : min
       );
       breakdown[category] = cheapest.name;
-      totalCost += cheapest[category as keyof CloudProvider] as number;
+      totalCost += (cheapest[category as keyof CloudProvider] as number) || 0;
     });
 
     return {

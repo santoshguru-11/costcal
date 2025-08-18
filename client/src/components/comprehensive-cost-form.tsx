@@ -177,6 +177,78 @@ export default function ComprehensiveCostForm() {
           inputFormat: "standard",
         },
       },
+      // New advanced services
+      quantum: {
+        processingUnits: 0,
+        quantumAlgorithms: "optimization",
+        circuitComplexity: "basic",
+      },
+      advancedAI: {
+        vectorDatabase: {
+          dimensions: 0,
+          queries: 0,
+        },
+        customChips: {
+          tpuHours: 0,
+          inferenceChips: 0,
+        },
+        modelHosting: {
+          models: 0,
+          requests: 0,
+        },
+        ragPipelines: {
+          documents: 0,
+          embeddings: 0,
+        },
+      },
+      edge: {
+        edgeLocations: 0,
+        edgeCompute: 0,
+        fiveGNetworking: {
+          networkSlices: 0,
+          privateNetworks: 0,
+        },
+        realTimeProcessing: 0,
+      },
+      confidential: {
+        secureEnclaves: 0,
+        trustedExecution: 0,
+        privacyPreservingAnalytics: 0,
+        zeroTrustProcessing: 0,
+      },
+      sustainability: {
+        carbonFootprintTracking: false,
+        renewableEnergyPreference: false,
+        greenCloudOptimization: false,
+        carbonOffsetCredits: 0,
+      },
+      scenarios: {
+        disasterRecovery: {
+          enabled: false,
+          rtoHours: 24,
+          rpoMinutes: 240,
+          backupRegions: 1,
+        },
+        compliance: {
+          frameworks: [],
+          auditLogging: false,
+          dataResidency: "global",
+        },
+        migration: {
+          dataToMigrate: 0,
+          applicationComplexity: "moderate",
+        },
+      },
+      optimization: {
+        reservedInstanceStrategy: "moderate",
+        spotInstanceTolerance: 10,
+        autoScalingAggression: "moderate",
+        costAlerts: {
+          enabled: true,
+          thresholdPercent: 20,
+          notificationPreference: "email",
+        },
+      },
     },
   });
 
@@ -221,13 +293,15 @@ export default function ComprehensiveCostForm() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <Tabs defaultValue="compute" className="w-full">
-                <TabsList className="grid w-full grid-cols-6">
+                <TabsList className="grid w-full grid-cols-8">
                   <TabsTrigger value="compute">Compute</TabsTrigger>
                   <TabsTrigger value="storage">Storage</TabsTrigger>
                   <TabsTrigger value="database">Database</TabsTrigger>
                   <TabsTrigger value="networking">Network</TabsTrigger>
                   <TabsTrigger value="analytics">Analytics</TabsTrigger>
                   <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                  <TabsTrigger value="quantum">Quantum/AI</TabsTrigger>
+                  <TabsTrigger value="optimization">Settings</TabsTrigger>
                 </TabsList>
 
                 {/* Compute Tab */}
@@ -1069,6 +1143,493 @@ export default function ComprehensiveCostForm() {
                                 onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                               />
                             </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* New Quantum/AI Tab */}
+                <TabsContent value="quantum" className="space-y-6">
+                  {/* Quantum Computing */}
+                  <div className="space-y-4">
+                    <h4 className="text-md font-semibold">Quantum Computing Services</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="quantum.processingUnits"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>QPU Hours per Month</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="quantum.quantumAlgorithms"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Algorithm Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="optimization">Optimization</SelectItem>
+                                <SelectItem value="simulation">Simulation</SelectItem>
+                                <SelectItem value="cryptography">Cryptography</SelectItem>
+                                <SelectItem value="ml">Machine Learning</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="quantum.circuitComplexity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Circuit Complexity</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="basic">Basic</SelectItem>
+                                <SelectItem value="intermediate">Intermediate</SelectItem>
+                                <SelectItem value="advanced">Advanced</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Advanced AI/ML Platform */}
+                  <div className="space-y-4">
+                    <h4 className="text-md font-semibold">Advanced AI/ML Platform Services</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="advancedAI.vectorDatabase.dimensions"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Vector Database Dimensions</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="advancedAI.vectorDatabase.queries"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Vector Queries per Month</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="advancedAI.customChips.tpuHours"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>TPU Hours per Month</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="advancedAI.modelHosting.models"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Models Hosted</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Edge Computing & 5G */}
+                  <div className="space-y-4">
+                    <h4 className="text-md font-semibold">Edge Computing & 5G Services</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="edge.edgeLocations"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Edge Locations</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="edge.edgeCompute"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Edge Compute Hours</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="edge.fiveGNetworking.networkSlices"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>5G Network Slices</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="confidential.secureEnclaves"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Secure Enclave Hours</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Optimization & Settings Tab */}
+                <TabsContent value="optimization" className="space-y-6">
+                  {/* Cost Optimization Settings */}
+                  <div className="space-y-4">
+                    <h4 className="text-md font-semibold">Cost Optimization Preferences</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="optimization.reservedInstanceStrategy"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Reserved Instance Strategy</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                <SelectItem value="conservative">Conservative (5% savings)</SelectItem>
+                                <SelectItem value="moderate">Moderate (12% savings)</SelectItem>
+                                <SelectItem value="aggressive">Aggressive (22% savings)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="optimization.spotInstanceTolerance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Spot Instance Tolerance (%)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="10"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="optimization.autoScalingAggression"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Auto-scaling Strategy</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="minimal">Minimal (2% savings)</SelectItem>
+                                <SelectItem value="moderate">Moderate (8% savings)</SelectItem>
+                                <SelectItem value="aggressive">Aggressive (15% savings)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sustainability Settings */}
+                  <div className="space-y-4">
+                    <h4 className="text-md font-semibold">Sustainability & Green Computing</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="sustainability.carbonFootprintTracking"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Carbon Footprint Tracking</FormLabel>
+                              <div className="text-sm text-gray-500">Monitor CO2 emissions from your cloud usage</div>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="sustainability.renewableEnergyPreference"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Prefer Renewable Energy</FormLabel>
+                              <div className="text-sm text-gray-500">Choose providers with higher renewable energy %</div>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="sustainability.greenCloudOptimization"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Green Cloud Optimization</FormLabel>
+                              <div className="text-sm text-gray-500">Optimize for environmental impact</div>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="sustainability.carbonOffsetCredits"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Carbon Offset Credits (tons CO2)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Advanced Scenarios */}
+                  <div className="space-y-4">
+                    <h4 className="text-md font-semibold">Advanced Scenarios</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="scenarios.disasterRecovery.enabled"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">Disaster Recovery</FormLabel>
+                              <div className="text-sm text-gray-500">Enable multi-region backup and recovery</div>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="scenarios.compliance.dataResidency"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data Residency Requirements</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="global">Global</SelectItem>
+                                <SelectItem value="us">United States</SelectItem>
+                                <SelectItem value="eu">European Union</SelectItem>
+                                <SelectItem value="asia">Asia Pacific</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="scenarios.migration.dataToMigrate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data to Migrate (TB)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="scenarios.migration.applicationComplexity"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Migration Complexity</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="simple">Simple</SelectItem>
+                                <SelectItem value="moderate">Moderate</SelectItem>
+                                <SelectItem value="complex">Complex</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}

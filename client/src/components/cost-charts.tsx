@@ -17,11 +17,15 @@ interface CostChartsProps {
 export default function CostCharts({ providers, cheapestProvider }: CostChartsProps) {
   const costChartRef = useRef<HTMLCanvasElement>(null);
   const breakdownChartRef = useRef<HTMLCanvasElement>(null);
+  const sustainabilityChartRef = useRef<HTMLCanvasElement>(null);
+  const serviceComparisonRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.Chart) {
       initCostChart();
       initBreakdownChart();
+      initSustainabilityChart();
+      initServiceComparisonChart();
     } else {
       // Load Chart.js if not already loaded
       const script = document.createElement("script");
@@ -29,6 +33,8 @@ export default function CostCharts({ providers, cheapestProvider }: CostChartsPr
       script.onload = () => {
         initCostChart();
         initBreakdownChart();
+        initSustainabilityChart();
+        initServiceComparisonChart();
       };
       document.head.appendChild(script);
     }
@@ -172,6 +178,32 @@ export default function CostCharts({ providers, cheapestProvider }: CostChartsPr
       data.push(cheapestProvider.media);
     }
 
+    // Add advanced 2025 services if they exist and have costs > 0
+    if (cheapestProvider.quantum && cheapestProvider.quantum > 0) {
+      labels.push('Quantum');
+      data.push(cheapestProvider.quantum);
+    }
+    if (cheapestProvider.advancedAI && cheapestProvider.advancedAI > 0) {
+      labels.push('Advanced AI');
+      data.push(cheapestProvider.advancedAI);
+    }
+    if (cheapestProvider.edge && cheapestProvider.edge > 0) {
+      labels.push('Edge & 5G');
+      data.push(cheapestProvider.edge);
+    }
+    if (cheapestProvider.confidential && cheapestProvider.confidential > 0) {
+      labels.push('Confidential');
+      data.push(cheapestProvider.confidential);
+    }
+    if (cheapestProvider.sustainability && cheapestProvider.sustainability > 0) {
+      labels.push('Sustainability');
+      data.push(cheapestProvider.sustainability);
+    }
+    if (cheapestProvider.scenarios && cheapestProvider.scenarios > 0) {
+      labels.push('Scenarios');
+      data.push(cheapestProvider.scenarios);
+    }
+
     new window.Chart(ctx, {
       type: 'doughnut',
       data: {
@@ -212,26 +244,267 @@ export default function CostCharts({ providers, cheapestProvider }: CostChartsPr
     });
   };
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Cost Comparison</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64">
-            <canvas ref={costChartRef}></canvas>
-          </div>
-        </CardContent>
-      </Card>
+  const initSustainabilityChart = () => {
+    if (!sustainabilityChartRef.current || !window.Chart) return;
+    
+    const ctx = sustainabilityChartRef.current.getContext('2d');
+    if (!ctx) return;
 
-      <Card>
+    // Destroy existing chart if it exists
+    const existingChart = window.Chart.getChart(sustainabilityChartRef.current);
+    if (existingChart) {
+      existingChart.destroy();
+    }
+
+    // Check if providers have sustainability data
+    const hasRenewableData = providers.some(p => p.renewableEnergyPercent !== undefined);
+    const hasCarbonData = providers.some(p => p.carbonFootprint !== undefined);
+    
+    if (!hasRenewableData && !hasCarbonData) return;
+
+    const datasets = [];
+    
+    if (hasRenewableData) {
+      datasets.push({
+        label: 'Renewable Energy %',
+        data: providers.map(p => p.renewableEnergyPercent || 0),
+        backgroundColor: 'rgba(34, 197, 94, 0.6)',
+        borderColor: 'rgb(34, 197, 94)',
+        borderWidth: 2,
+        yAxisID: 'y'
+      });
+    }
+
+    if (hasCarbonData) {
+      datasets.push({
+        label: 'Carbon Footprint (tons CO2/mo)',
+        data: providers.map(p => p.carbonFootprint || 0),
+        backgroundColor: 'rgba(239, 68, 68, 0.6)',
+        borderColor: 'rgb(239, 68, 68)',
+        borderWidth: 2,
+        yAxisID: 'y1'
+      });
+    }
+
+    new window.Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: providers.map(p => p.name),
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index' as const,
+          intersect: false,
+        },
+        scales: {
+          y: {
+            type: 'linear' as const,
+            display: hasRenewableData,
+            position: 'left' as const,
+            max: 100,
+            title: {
+              display: true,
+              text: 'Renewable Energy %'
+            }
+          },
+          y1: {
+            type: 'linear' as const,
+            display: hasCarbonData,
+            position: 'right' as const,
+            grid: {
+              drawOnChartArea: false,
+            },
+            title: {
+              display: true,
+              text: 'CO2 Emissions'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top' as const
+          }
+        }
+      }
+    });
+  };
+
+  const initServiceComparisonChart = () => {
+    if (!serviceComparisonRef.current || !window.Chart) return;
+    
+    const ctx = serviceComparisonRef.current.getContext('2d');
+    if (!ctx) return;
+
+    // Destroy existing chart if it exists
+    const existingChart = window.Chart.getChart(serviceComparisonRef.current);
+    if (existingChart) {
+      existingChart.destroy();
+    }
+
+    // Define all service categories with their display names
+    const serviceCategories = [
+      { key: 'compute', name: 'Compute' },
+      { key: 'storage', name: 'Storage' },
+      { key: 'database', name: 'Database' },
+      { key: 'networking', name: 'Networking' },
+      { key: 'analytics', name: 'Analytics' },
+      { key: 'ai', name: 'AI/ML' },
+      { key: 'quantum', name: 'Quantum' },
+      { key: 'advancedAI', name: 'Adv AI' },
+      { key: 'edge', name: 'Edge/5G' },
+      { key: 'confidential', name: 'Confidential' },
+      { key: 'security', name: 'Security' },
+      { key: 'monitoring', name: 'Monitoring' },
+      { key: 'devops', name: 'DevOps' },
+      { key: 'backup', name: 'Backup' }
+    ];
+
+    // Filter to only show categories that have non-zero costs
+    const activeServices = serviceCategories.filter(service => 
+      providers.some(provider => (provider as any)[service.key] > 0)
+    );
+
+    if (activeServices.length === 0) return;
+
+    const datasets = providers.map((provider, index) => ({
+      label: provider.name,
+      data: activeServices.map(service => (provider as any)[service.key] || 0),
+      backgroundColor: [
+        'rgba(255, 159, 67, 0.8)',   // AWS - Orange
+        'rgba(0, 120, 212, 0.8)',    // Azure - Blue
+        'rgba(66, 133, 244, 0.8)',   // GCP - Google Blue
+        'rgba(248, 0, 0, 0.8)'       // Oracle - Red
+      ][index],
+      borderColor: [
+        'rgb(255, 159, 67)',
+        'rgb(0, 120, 212)',
+        'rgb(66, 133, 244)',
+        'rgb(248, 0, 0)'
+      ][index],
+      borderWidth: 1
+    }));
+
+    new window.Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: activeServices.map(s => s.name),
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Monthly Cost ($)'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top' as const
+          }
+        }
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-8 mb-8">
+      {/* Primary Cost Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Cost Comparison</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <canvas ref={costChartRef}></canvas>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Cost Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <canvas ref={breakdownChartRef}></canvas>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Advanced Analysis Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>🌱 Sustainability Metrics</CardTitle>
+            <p className="text-sm text-slate-600">Environmental impact comparison across providers</p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <canvas ref={sustainabilityChartRef}></canvas>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>📊 Service-by-Service Comparison</CardTitle>
+            <p className="text-sm text-slate-600">Detailed cost analysis by service category</p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <canvas ref={serviceComparisonRef}></canvas>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Advanced Insights */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
         <CardHeader>
-          <CardTitle>Service Cost Breakdown</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            🚀 Advanced Cloud Cost Intelligence
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64">
-            <canvas ref={breakdownChartRef}></canvas>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+              <div className="text-2xl font-bold text-blue-600">
+                {providers.length > 0 ? Math.round((1 - cheapestProvider.total / Math.max(...providers.map(p => p.total))) * 100) : 0}%
+              </div>
+              <div className="text-sm text-slate-600 mt-1">Cost Optimization</div>
+              <div className="text-xs text-slate-500 mt-1">vs most expensive option</div>
+            </div>
+            
+            <div className="text-center p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+              <div className="text-2xl font-bold text-green-600">
+                {providers.length > 0 ? Math.max(...providers.map(p => p.renewableEnergyPercent || 0)) : 0}%
+              </div>
+              <div className="text-sm text-slate-600 mt-1">Best Renewable Energy</div>
+              <div className="text-xs text-slate-500 mt-1">highest among providers</div>
+            </div>
+            
+            <div className="text-center p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+              <div className="text-2xl font-bold text-purple-600">
+                {/* Count of unique services with costs > 0 */}
+                {providers.length > 0 ? Object.keys(cheapestProvider).filter(key => 
+                  !['name', 'total', 'carbonFootprint', 'renewableEnergyPercent'].includes(key) && 
+                  (cheapestProvider as any)[key] > 0
+                ).length : 0}
+              </div>
+              <div className="text-sm text-slate-600 mt-1">Active Services</div>
+              <div className="text-xs text-slate-500 mt-1">across your infrastructure</div>
+            </div>
           </div>
         </CardContent>
       </Card>
