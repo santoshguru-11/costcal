@@ -298,8 +298,9 @@ export default function ComprehensiveCostForm() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <Tabs defaultValue="compute" className="w-full">
-                <TabsList className="grid w-full grid-cols-8">
+                <TabsList className="grid w-full grid-cols-9">
                   <TabsTrigger value="compute">Compute</TabsTrigger>
+                  <TabsTrigger value="serverless">Serverless</TabsTrigger>
                   <TabsTrigger value="storage">Storage</TabsTrigger>
                   <TabsTrigger value="database">Database</TabsTrigger>
                   <TabsTrigger value="networking">Network</TabsTrigger>
@@ -311,6 +312,10 @@ export default function ComprehensiveCostForm() {
 
                 {/* Compute Tab */}
                 <TabsContent value="compute" className="space-y-6">
+                  <div className="mb-4">
+                    <h4 className="text-md font-semibold">Traditional Compute Resources</h4>
+                    <p className="text-sm text-slate-600">Configure virtual machines, containers, and dedicated instances with boot volume storage</p>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
@@ -506,9 +511,14 @@ export default function ComprehensiveCostForm() {
                     </div>
                   </div>
 
-                  {/* Serverless Section */}
+
+                </TabsContent>
+
+                {/* Serverless Tab */}
+                <TabsContent value="serverless" className="space-y-6">
                   <div className="space-y-4">
-                    <h4 className="text-md font-semibold">Serverless Functions</h4>
+                    <h4 className="text-md font-semibold">Serverless Functions Configuration</h4>
+                    <p className="text-sm text-slate-600">Configure serverless functions across all cloud providers (AWS Lambda, Azure Functions, Google Cloud Functions, Oracle Functions)</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
                         control={form.control}
@@ -549,6 +559,16 @@ export default function ComprehensiveCostForm() {
                         )}
                       />
                     </div>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Serverless Cost Factors</h5>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>• Charges based on function invocations and execution time</li>
+                      <li>• Memory allocation affects pricing (1GB default)</li>
+                      <li>• Free tier includes 1M requests and 400,000 GB-seconds</li>
+                      <li>• Cold start times vary by provider and runtime</li>
+                    </ul>
                   </div>
                 </TabsContent>
 

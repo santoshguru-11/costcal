@@ -117,6 +117,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     </TableCell>
                   ))}
                 </TableRow>
+                {/* Note: Serverless costs are included in compute totals */}
                 <TableRow className="bg-slate-50">
                   <TableCell className="font-medium">Storage</TableCell>
                   {results.providers.map((provider) => (
