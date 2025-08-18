@@ -13,8 +13,8 @@ export default function Home() {
             <span className="text-primary block mt-2">Across All Providers</span>
           </h1>
           <p className="mt-6 text-xl text-slate-600 max-w-3xl mx-auto">
-            Get instant cost comparisons across AWS, Azure, GCP, and Oracle Cloud. 
-            Find the best pricing for your infrastructure requirements with our advanced optimization engine.
+            Compare comprehensive cloud costs across AWS, Azure, GCP, and Oracle Cloud. 
+            Analyze 15+ service categories including AI/ML, analytics, security, IoT, and more with advanced optimization.
           </p>
           <div className="mt-10 flex justify-center">
             <Link href="/calculator">
@@ -25,20 +25,20 @@ export default function Home() {
           </div>
           <div className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4">
             <div className="text-center">
+              <div className="text-3xl font-bold text-primary">15+</div>
+              <div className="text-sm text-slate-600">Service Categories</div>
+            </div>
+            <div className="text-center">
               <div className="text-3xl font-bold text-primary">4</div>
               <div className="text-sm text-slate-600">Cloud Providers</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary">99.9%</div>
-              <div className="text-sm text-slate-600">Accuracy Rate</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary">30%</div>
+              <div className="text-3xl font-bold text-primary">35%</div>
               <div className="text-sm text-slate-600">Avg. Savings</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary">1000+</div>
-              <div className="text-sm text-slate-600">Companies Trust Us</div>
+              <div className="text-3xl font-bold text-primary">150+</div>
+              <div className="text-sm text-slate-600">Cloud Services</div>
             </div>
           </div>
         </div>

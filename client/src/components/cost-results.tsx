@@ -141,6 +141,86 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     </TableCell>
                   ))}
                 </TableRow>
+                {results.providers[0].analytics !== undefined && (
+                  <TableRow>
+                    <TableCell className="font-medium">Analytics</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.analytics || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].ai !== undefined && (
+                  <TableRow className="bg-slate-50">
+                    <TableCell className="font-medium">AI/ML</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.ai || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].security !== undefined && (
+                  <TableRow>
+                    <TableCell className="font-medium">Security</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.security || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].monitoring !== undefined && (
+                  <TableRow className="bg-slate-50">
+                    <TableCell className="font-medium">Monitoring</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.monitoring || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].devops !== undefined && (
+                  <TableRow>
+                    <TableCell className="font-medium">DevOps</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.devops || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].backup !== undefined && (
+                  <TableRow className="bg-slate-50">
+                    <TableCell className="font-medium">Backup</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.backup || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].iot !== undefined && (
+                  <TableRow>
+                    <TableCell className="font-medium">IoT</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.iot || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
+                {results.providers[0].media !== undefined && (
+                  <TableRow className="bg-slate-50">
+                    <TableCell className="font-medium">Media</TableCell>
+                    {results.providers.map((provider) => (
+                      <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                        ${provider.media || 0}/mo
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )}
                 <TableRow className="bg-primary/5 font-semibold">
                   <TableCell className="font-bold">Total Monthly Cost</TableCell>
                   {results.providers.map((provider) => (

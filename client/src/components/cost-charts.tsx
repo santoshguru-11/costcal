@@ -102,18 +102,83 @@ export default function CostCharts({ providers, cheapestProvider }: CostChartsPr
       existingChart.destroy();
     }
 
+    // Build comprehensive service categories data
+    const labels = [];
+    const data = [];
+    const colors = [
+      '#2563EB', // Compute - Blue
+      '#10B981', // Storage - Green  
+      '#F59E0B', // Database - Amber
+      '#EF4444', // Networking - Red
+      '#8B5CF6', // Analytics - Purple
+      '#06B6D4', // AI/ML - Cyan
+      '#EC4899', // Security - Pink
+      '#84CC16', // Monitoring - Lime
+      '#F97316', // DevOps - Orange
+      '#6366F1', // Backup - Indigo
+      '#14B8A6', // IoT - Teal
+      '#F59E0B'  // Media - Amber variant
+    ];
+
+    // Add core services
+    if (cheapestProvider.compute > 0) {
+      labels.push('Compute');
+      data.push(cheapestProvider.compute);
+    }
+    if (cheapestProvider.storage > 0) {
+      labels.push('Storage');
+      data.push(cheapestProvider.storage);
+    }
+    if (cheapestProvider.database > 0) {
+      labels.push('Database');
+      data.push(cheapestProvider.database);
+    }
+    if (cheapestProvider.networking > 0) {
+      labels.push('Networking');
+      data.push(cheapestProvider.networking);
+    }
+
+    // Add comprehensive services if they exist and have costs > 0
+    if (cheapestProvider.analytics && cheapestProvider.analytics > 0) {
+      labels.push('Analytics');
+      data.push(cheapestProvider.analytics);
+    }
+    if (cheapestProvider.ai && cheapestProvider.ai > 0) {
+      labels.push('AI/ML');
+      data.push(cheapestProvider.ai);
+    }
+    if (cheapestProvider.security && cheapestProvider.security > 0) {
+      labels.push('Security');
+      data.push(cheapestProvider.security);
+    }
+    if (cheapestProvider.monitoring && cheapestProvider.monitoring > 0) {
+      labels.push('Monitoring');
+      data.push(cheapestProvider.monitoring);
+    }
+    if (cheapestProvider.devops && cheapestProvider.devops > 0) {
+      labels.push('DevOps');
+      data.push(cheapestProvider.devops);
+    }
+    if (cheapestProvider.backup && cheapestProvider.backup > 0) {
+      labels.push('Backup');
+      data.push(cheapestProvider.backup);
+    }
+    if (cheapestProvider.iot && cheapestProvider.iot > 0) {
+      labels.push('IoT');
+      data.push(cheapestProvider.iot);
+    }
+    if (cheapestProvider.media && cheapestProvider.media > 0) {
+      labels.push('Media');
+      data.push(cheapestProvider.media);
+    }
+
     new window.Chart(ctx, {
       type: 'doughnut',
       data: {
-        labels: ['Compute', 'Storage', 'Database', 'Networking'],
+        labels,
         datasets: [{
-          data: [cheapestProvider.compute, cheapestProvider.storage, cheapestProvider.database, cheapestProvider.networking],
-          backgroundColor: [
-            '#2563EB',
-            '#10B981',
-            '#F59E0B',
-            '#EF4444'
-          ],
+          data,
+          backgroundColor: colors.slice(0, labels.length),
           borderWidth: 2,
           borderColor: '#FFFFFF'
         }]
@@ -123,7 +188,24 @@ export default function CostCharts({ providers, cheapestProvider }: CostChartsPr
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'bottom' as const
+            position: 'bottom' as const,
+            labels: {
+              padding: 15,
+              font: {
+                size: 11
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context: any) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: $${value}/mo (${percentage}%)`;
+              }
+            }
           }
         }
       }

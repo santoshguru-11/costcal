@@ -1,11 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { CostCalculator } from "./utils/costCalculator";
+import { ComprehensiveCostCalculator } from "./utils/comprehensiveCostCalculator";
 import { infrastructureRequirementsSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  const costCalculator = new CostCalculator();
+  const costCalculator = new ComprehensiveCostCalculator();
 
   // Calculate costs endpoint
   app.post("/api/calculate", async (req, res) => {
