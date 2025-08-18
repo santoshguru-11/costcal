@@ -2,9 +2,9 @@
 
 ## Overview
 
-Cloud Cost Optimizer is a professional-grade web application designed to replicate the functionality and interface of Oracle's official cost estimator. The application provides enterprise-level cloud infrastructure cost comparison and optimization across multiple cloud providers (AWS, Azure, GCP, and Oracle Cloud) through a sophisticated catalog-based interface.
+Cloud Cost Optimizer is a web application designed to help businesses compare and optimize their cloud infrastructure costs across multiple cloud providers (AWS, Azure, GCP, and Oracle Cloud). The application provides comprehensive cost analysis, real-time comparisons, and optimization recommendations through an intuitive interface.
 
-The system features a comprehensive service catalog with detailed specifications, reference architectures for common use cases, compute shape configurations, and professional cost estimation tools. Users can browse services by category, select from pre-built reference architectures, or configure individual services to build custom infrastructure estimates with detailed breakdowns and optimization recommendations.
+The system allows users to input their infrastructure requirements including compute specifications, storage needs, database requirements, and networking configurations. It then calculates costs across all major cloud providers and provides detailed breakdowns, charts, and recommendations for cost optimization.
 
 ## User Preferences
 
@@ -14,13 +14,11 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 - **Framework**: React with TypeScript using Vite as the build tool
-- **Interface Design**: Professional Oracle-style cost estimator interface with sidebar navigation and service catalog
 - **Routing**: Wouter for lightweight client-side routing
-- **State Management**: TanStack React Query for server state management with local component state for UI interactions
-- **Styling**: Tailwind CSS with shadcn/ui component library for enterprise-grade design consistency
-- **Service Catalog**: Comprehensive multi-provider service browser with detailed specifications and pricing
-- **Reference Architectures**: Pre-built solution templates for common use cases (Web Apps, AI/ML, Data Analytics)
-- **Charts**: Advanced Chart.js integration with sustainability metrics and service-by-service comparisons
+- **State Management**: TanStack React Query for server state management
+- **Styling**: Tailwind CSS with shadcn/ui component library for consistent design
+- **Form Handling**: React Hook Form with Zod validation for type-safe form validation
+- **Charts**: Chart.js integration for cost visualization and comparison charts
 
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js framework
