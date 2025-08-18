@@ -1,4 +1,53 @@
 {
+  "currencies": {
+    "USD": { "symbol": "$", "rate": 1.0 },
+    "INR": { "symbol": "₹", "rate": 83.12 },
+    "EUR": { "symbol": "€", "rate": 0.92 },
+    "KWD": { "symbol": "د.ك", "rate": 0.31 }
+  },
+  "licensing": {
+    "windows": {
+      "server_standard": 972,
+      "server_datacenter": 6155,
+      "per_core": true
+    },
+    "sqlServer": {
+      "express": 0,
+      "standard": 3586,
+      "enterprise": 14256,
+      "per_core": true
+    },
+    "oracle": {
+      "standard": 17500,
+      "enterprise": 47500,
+      "per_core": true,
+      "annual": true
+    },
+    "vmware": {
+      "vsphere_standard": 995,
+      "vsphere_enterprise": 3595,
+      "per_cpu": true,
+      "annual": true
+    },
+    "redhat": {
+      "enterprise_linux": 799,
+      "per_socket": true,
+      "annual": true
+    },
+    "sap": {
+      "hana_enterprise": 73000,
+      "business_suite": 29500,
+      "per_user": false,
+      "annual": true
+    },
+    "microsoftOffice365": {
+      "business_basic": 6,
+      "business_premium": 22,
+      "enterprise_e3": 36,
+      "per_user": true,
+      "monthly": true
+    }
+  },
   "compute": {
     "aws": {
       "general-purpose": { "vcpu": 0.0464, "ram": 0.0051 },

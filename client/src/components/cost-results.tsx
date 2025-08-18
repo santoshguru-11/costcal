@@ -30,7 +30,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Cheapest Option</p>
-                <p className="text-2xl font-bold text-green-600">${results.cheapest.total}/mo</p>
+                <p className="text-2xl font-bold text-green-600">{results.cheapest.currencySymbol || '$'}{results.cheapest.total}/mo</p>
                 <p className="text-sm text-slate-500">{results.cheapest.name}</p>
               </div>
               <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
@@ -45,7 +45,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Most Expensive</p>
-                <p className="text-2xl font-bold text-red-600">${results.mostExpensive.total}/mo</p>
+                <p className="text-2xl font-bold text-red-600">{results.mostExpensive.currencySymbol || '$'}{results.mostExpensive.total}/mo</p>
                 <p className="text-sm text-slate-500">{results.mostExpensive.name}</p>
               </div>
               <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
@@ -60,7 +60,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Potential Savings</p>
-                <p className="text-2xl font-bold text-primary">${results.potentialSavings}/mo</p>
+                <p className="text-2xl font-bold text-primary">{results.providers[0]?.currencySymbol || '$'}{results.potentialSavings}/mo</p>
                 <p className="text-sm text-slate-500">
                   {Math.round((results.potentialSavings / results.mostExpensive.total) * 100)}% reduction
                 </p>
@@ -77,7 +77,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">Multi-Cloud Option</p>
-                <p className="text-2xl font-bold text-amber-600">${results.multiCloudOption.cost}/mo</p>
+                <p className="text-2xl font-bold text-amber-600">{results.providers[0]?.currencySymbol || '$'}{results.multiCloudOption.cost}/mo</p>
                 <p className="text-sm text-slate-500">Best hybrid</p>
               </div>
               <div className="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
@@ -113,12 +113,19 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                   <TableCell className="font-medium">Compute</TableCell>
                   {results.providers.map((provider) => (
                     <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                      ${provider.compute}/mo
+                      {provider.currencySymbol || '$'}{provider.compute}/mo
                     </TableCell>
                   ))}
                 </TableRow>
-                {/* Note: Serverless costs are included in compute totals */}
                 <TableRow className="bg-slate-50">
+                  <TableCell className="font-medium">Licensing</TableCell>
+                  {results.providers.map((provider) => (
+                    <TableCell key={provider.name} className="text-purple-600 font-semibold">
+                      {provider.currencySymbol || '$'}{provider.licensing || 0}/mo
+                    </TableCell>
+                  ))}
+                </TableRow>
+                <TableRow>
                   <TableCell className="font-medium">Storage</TableCell>
                   {results.providers.map((provider) => (
                     <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>

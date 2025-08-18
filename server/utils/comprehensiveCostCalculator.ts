@@ -10,6 +10,9 @@ export class ComprehensiveCostCalculator {
 
     // Calculate region multiplier
     const regionMultiplier = this.pricing.regions[requirements.compute.region as keyof typeof this.pricing.regions]?.multiplier || 1.0;
+    
+    // Calculate licensing costs (provider-independent)
+    const licensingCosts = this.calculateLicensing(requirements);
 
     for (const provider of providers) {
       const costs = {
@@ -31,6 +34,7 @@ export class ComprehensiveCostCalculator {
         confidential: this.calculateConfidential(provider, requirements, regionMultiplier),
         sustainability: this.calculateSustainability(provider, requirements),
         scenarios: this.calculateScenarios(provider, requirements, regionMultiplier),
+        licensing: licensingCosts,
       };
 
       // Apply optimization adjustments
@@ -44,33 +48,41 @@ export class ComprehensiveCostCalculator {
       const carbonFootprint = this.calculateCarbonFootprint(provider, total);
       const renewablePercent = this.getRenewableEnergyPercent(provider);
 
+      // Apply currency conversion
+      const currencyRate = this.pricing.currencies[requirements.currency || 'USD']?.rate || 1.0;
+      const convertedTotal = total * currencyRate;
+      const convertedLicensing = costs.licensing * currencyRate;
+
       results.push({
         name: provider.toUpperCase(),
-        compute: Math.round(costs.compute * 100) / 100,
-        storage: Math.round(costs.storage * 100) / 100,
-        database: Math.round(costs.database * 100) / 100,
-        networking: Math.round(costs.networking * 100) / 100,
-        total: Math.round(total * 100) / 100,
+        compute: Math.round(costs.compute * currencyRate * 100) / 100,
+        storage: Math.round(costs.storage * currencyRate * 100) / 100,
+        database: Math.round(costs.database * currencyRate * 100) / 100,
+        networking: Math.round(costs.networking * currencyRate * 100) / 100,
+        licensing: Math.round(convertedLicensing * 100) / 100,
+        total: Math.round((total + costs.licensing) * currencyRate * 100) / 100,
         // Add extended cost breakdown
-        analytics: Math.round(costs.analytics * 100) / 100,
-        ai: Math.round(costs.ai * 100) / 100,
-        security: Math.round(costs.security * 100) / 100,
-        monitoring: Math.round(costs.monitoring * 100) / 100,
-        devops: Math.round(costs.devops * 100) / 100,
-        backup: Math.round(costs.backup * 100) / 100,
-        iot: Math.round(costs.iot * 100) / 100,
-        media: Math.round(costs.media * 100) / 100,
+        analytics: Math.round(costs.analytics * currencyRate * 100) / 100,
+        ai: Math.round(costs.ai * currencyRate * 100) / 100,
+        security: Math.round(costs.security * currencyRate * 100) / 100,
+        monitoring: Math.round(costs.monitoring * currencyRate * 100) / 100,
+        devops: Math.round(costs.devops * currencyRate * 100) / 100,
+        backup: Math.round(costs.backup * currencyRate * 100) / 100,
+        iot: Math.round(costs.iot * currencyRate * 100) / 100,
+        media: Math.round(costs.media * currencyRate * 100) / 100,
         // Add new advanced services
-        quantum: Math.round(costs.quantum * 100) / 100,
-        advancedAI: Math.round(costs.advancedAI * 100) / 100,
-        edge: Math.round(costs.edge * 100) / 100,
-        confidential: Math.round(costs.confidential * 100) / 100,
-        sustainability: Math.round(costs.sustainability * 100) / 100,
-        scenarios: Math.round(costs.scenarios * 100) / 100,
+        quantum: Math.round(costs.quantum * currencyRate * 100) / 100,
+        advancedAI: Math.round(costs.advancedAI * currencyRate * 100) / 100,
+        edge: Math.round(costs.edge * currencyRate * 100) / 100,
+        confidential: Math.round(costs.confidential * currencyRate * 100) / 100,
+        sustainability: Math.round(costs.sustainability * currencyRate * 100) / 100,
+        scenarios: Math.round(costs.scenarios * currencyRate * 100) / 100,
         // Add sustainability metrics
         carbonFootprint: Math.round(carbonFootprint * 1000) / 1000,
         renewableEnergyPercent: renewablePercent,
-      } as CloudProvider & Record<string, number>);
+        currency: requirements.currency || 'USD',
+        currencySymbol: this.pricing.currencies[requirements.currency || 'USD']?.symbol || '$',
+      } as CloudProvider & Record<string, number | string>);
     }
 
     // Sort by total cost
@@ -629,18 +641,85 @@ export class ComprehensiveCostCalculator {
     return pricing.renewable_percent;
   }
 
+  private calculateLicensing(requirements: InfrastructureRequirements): number {
+    let totalLicensingCost = 0;
+    const licensing = this.pricing.licensing;
+    const vcpus = requirements.compute.vcpus;
+
+    // Windows Server Licensing
+    if (requirements.licensing?.windows?.enabled) {
+      const licenses = requirements.licensing.windows.licenses;
+      const pricePerCore = licensing.windows.server_standard;
+      totalLicensingCost += licenses * pricePerCore * vcpus; // Per core licensing
+    }
+
+    // SQL Server Licensing
+    if (requirements.licensing?.sqlServer?.enabled) {
+      const licenses = requirements.licensing.sqlServer.licenses;
+      const edition = requirements.licensing.sqlServer.edition;
+      const pricePerCore = licensing.sqlServer[edition as keyof typeof licensing.sqlServer] as number;
+      totalLicensingCost += licenses * pricePerCore * vcpus; // Per core licensing
+    }
+
+    // Oracle Database Licensing
+    if (requirements.licensing?.oracle?.enabled) {
+      const licenses = requirements.licensing.oracle.licenses;
+      const edition = requirements.licensing.oracle.edition;
+      const pricePerCore = licensing.oracle[edition as keyof typeof licensing.oracle] as number;
+      totalLicensingCost += (licenses * pricePerCore * vcpus) / 12; // Annual to monthly
+    }
+
+    // VMware Licensing
+    if (requirements.licensing?.vmware?.enabled) {
+      const licenses = requirements.licensing.vmware.licenses;
+      const pricePerCpu = licensing.vmware.vsphere_standard;
+      const cpuSockets = Math.ceil(vcpus / 8); // Assume 8 cores per socket
+      totalLicensingCost += (licenses * pricePerCpu * cpuSockets) / 12; // Annual to monthly
+    }
+
+    // Red Hat Enterprise Linux
+    if (requirements.licensing?.redhat?.enabled) {
+      const licenses = requirements.licensing.redhat.licenses;
+      const pricePerSocket = licensing.redhat.enterprise_linux;
+      const cpuSockets = Math.ceil(vcpus / 8);
+      totalLicensingCost += (licenses * pricePerSocket * cpuSockets) / 12; // Annual to monthly
+    }
+
+    // SAP Licensing
+    if (requirements.licensing?.sap?.enabled) {
+      const licenses = requirements.licensing.sap.licenses;
+      const pricePerLicense = licensing.sap.hana_enterprise;
+      totalLicensingCost += (licenses * pricePerLicense) / 12; // Annual to monthly
+    }
+
+    // Microsoft Office 365
+    if (requirements.licensing?.microsoftOffice365?.enabled) {
+      const licenses = requirements.licensing.microsoftOffice365.licenses;
+      const pricePerUser = licensing.microsoftOffice365.business_premium;
+      totalLicensingCost += licenses * pricePerUser; // Monthly pricing
+    }
+
+    return totalLicensingCost;
+  }
+
   private calculateMultiCloudOptimization(providers: CloudProvider[]): { cost: number; breakdown: Record<string, string> } {
     // Find cheapest option for each service category including new services
-    const categories = ['compute', 'storage', 'database', 'networking', 'analytics', 'ai', 'security', 'monitoring', 'devops', 'backup', 'iot', 'media', 'quantum', 'advancedAI', 'edge', 'confidential'];
+    const categories = ['compute', 'storage', 'database', 'networking', 'analytics', 'ai', 'security', 'monitoring', 'devops', 'backup', 'iot', 'media', 'quantum', 'advancedAI', 'edge', 'confidential', 'licensing'];
     const breakdown: Record<string, string> = {};
     let totalCost = 0;
 
     categories.forEach(category => {
-      const cheapest = providers.reduce((min, p) => 
-        (p[category as keyof CloudProvider] || 0) < (min[category as keyof CloudProvider] || 0) ? p : min
-      );
-      breakdown[category] = cheapest.name;
-      totalCost += (cheapest[category as keyof CloudProvider] as number) || 0;
+      if (category === 'licensing') {
+        // Licensing is provider-independent, so use the first provider's value
+        breakdown[category] = 'All Providers';
+        totalCost += (providers[0][category as keyof CloudProvider] as number) || 0;
+      } else {
+        const cheapest = providers.reduce((min, p) => 
+          (p[category as keyof CloudProvider] || 0) < (min[category as keyof CloudProvider] || 0) ? p : min
+        );
+        breakdown[category] = cheapest.name;
+        totalCost += (cheapest[category as keyof CloudProvider] as number) || 0;
+      }
     });
 
     return {

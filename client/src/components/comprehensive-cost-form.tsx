@@ -5,10 +5,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { infrastructureRequirementsSchema, type InfrastructureRequirements } from "@shared/schema";
@@ -21,6 +22,16 @@ export default function ComprehensiveCostForm() {
   const form = useForm<InfrastructureRequirements>({
     resolver: zodResolver(infrastructureRequirementsSchema),
     defaultValues: {
+      currency: "USD",
+      licensing: {
+        windows: { enabled: false, licenses: 0 },
+        sqlServer: { enabled: false, edition: "standard", licenses: 0 },
+        oracle: { enabled: false, edition: "standard", licenses: 0 },
+        vmware: { enabled: false, licenses: 0 },
+        redhat: { enabled: false, licenses: 0 },
+        sap: { enabled: false, licenses: 0 },
+        microsoftOffice365: { enabled: false, licenses: 0 },
+      },
       compute: {
         vcpus: 8,
         ram: 16,
@@ -298,7 +309,9 @@ export default function ComprehensiveCostForm() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <Tabs defaultValue="compute" className="w-full">
-                <TabsList className="grid w-full grid-cols-9">
+                <TabsList className="grid w-full grid-cols-6 md:grid-cols-11">
+                  <TabsTrigger value="currency">Currency</TabsTrigger>
+                  <TabsTrigger value="licensing">Licensing</TabsTrigger>
                   <TabsTrigger value="compute">Compute</TabsTrigger>
                   <TabsTrigger value="serverless">Serverless</TabsTrigger>
                   <TabsTrigger value="storage">Storage</TabsTrigger>
@@ -309,6 +322,235 @@ export default function ComprehensiveCostForm() {
                   <TabsTrigger value="quantum">Quantum/AI</TabsTrigger>
                   <TabsTrigger value="optimization">Settings</TabsTrigger>
                 </TabsList>
+
+                {/* Currency Tab */}
+                <TabsContent value="currency" className="space-y-6">
+                  <div className="mb-4">
+                    <h4 className="text-md font-semibold">Currency Selection</h4>
+                    <p className="text-sm text-slate-600">Choose your preferred currency for cost calculations and reporting</p>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="currency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Currency</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select currency" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="USD">USD ($) - US Dollar</SelectItem>
+                            <SelectItem value="INR">INR (₹) - Indian Rupee</SelectItem>
+                            <SelectItem value="EUR">EUR (€) - Euro</SelectItem>
+                            <SelectItem value="KWD">KWD (د.ك) - Kuwaiti Dinar</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Currency Exchange Information</h5>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>• Exchange rates are updated regularly based on market values</li>
+                      <li>• All cloud provider costs are converted from USD base pricing</li>
+                      <li>• Licensing costs are also converted to your selected currency</li>
+                      <li>• Results show currency symbol with converted amounts</li>
+                    </ul>
+                  </div>
+                </TabsContent>
+
+                {/* Licensing Tab */}
+                <TabsContent value="licensing" className="space-y-6">
+                  <div className="mb-4">
+                    <h4 className="text-md font-semibold">Software Licensing Costs</h4>
+                    <p className="text-sm text-slate-600">Configure software licenses that will run on your cloud infrastructure</p>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* Windows Server */}
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <FormField
+                          control={form.control}
+                          name="licensing.windows.enabled"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-medium">
+                                  Windows Server Standard
+                                </FormLabel>
+                                <FormDescription>
+                                  Core-based licensing for Windows Server
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      {form.watch("licensing.windows.enabled") && (
+                        <FormField
+                          control={form.control}
+                          name="licensing.windows.licenses"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Number of Licenses</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+
+                    {/* SQL Server */}
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <FormField
+                          control={form.control}
+                          name="licensing.sqlServer.enabled"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-medium">
+                                  Microsoft SQL Server
+                                </FormLabel>
+                                <FormDescription>
+                                  Core-based database licensing
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      {form.watch("licensing.sqlServer.enabled") && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="licensing.sqlServer.edition"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Edition</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select edition" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="express">Express (Free)</SelectItem>
+                                    <SelectItem value="standard">Standard</SelectItem>
+                                    <SelectItem value="enterprise">Enterprise</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="licensing.sqlServer.licenses"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Number of Licenses</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    placeholder="0"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Microsoft Office 365 */}
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <FormField
+                          control={form.control}
+                          name="licensing.microsoftOffice365.enabled"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-medium">
+                                  Microsoft Office 365
+                                </FormLabel>
+                                <FormDescription>
+                                  Per-user monthly subscription
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      {form.watch("licensing.microsoftOffice365.enabled") && (
+                        <FormField
+                          control={form.control}
+                          name="licensing.microsoftOffice365.licenses"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Number of Users</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="0"
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg">
+                    <h5 className="font-medium text-amber-900 dark:text-amber-100 mb-2">Licensing Cost Information</h5>
+                    <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-1">
+                      <li>• Costs are calculated based on your CPU/core configuration</li>
+                      <li>• Annual licenses are converted to monthly costs for comparison</li>
+                      <li>• Licensing costs apply across all cloud providers</li>
+                      <li>• Contact vendors for volume discounts and enterprise agreements</li>
+                    </ul>
+                  </div>
+                </TabsContent>
 
                 {/* Compute Tab */}
                 <TabsContent value="compute" className="space-y-6">

@@ -20,6 +20,40 @@ export type CostAnalysis = typeof costAnalyses.$inferSelect;
 
 // Frontend-specific schemas for form validation
 export const infrastructureRequirementsSchema = z.object({
+  // Currency and Licensing
+  currency: z.enum(['USD', 'INR', 'EUR', 'KWD']).default('USD'), // USD, Indian Rupee, Euro, Kuwaiti Dinar
+  licensing: z.object({
+    windows: z.object({
+      enabled: z.boolean().default(false),
+      licenses: z.number().min(0).max(1000).default(0),
+    }),
+    sqlServer: z.object({
+      enabled: z.boolean().default(false),
+      edition: z.enum(['express', 'standard', 'enterprise']).default('standard'),
+      licenses: z.number().min(0).max(1000).default(0),
+    }),
+    oracle: z.object({
+      enabled: z.boolean().default(false),
+      edition: z.enum(['standard', 'enterprise']).default('standard'),
+      licenses: z.number().min(0).max(1000).default(0),
+    }),
+    vmware: z.object({
+      enabled: z.boolean().default(false),
+      licenses: z.number().min(0).max(1000).default(0),
+    }),
+    redhat: z.object({
+      enabled: z.boolean().default(false),
+      licenses: z.number().min(0).max(1000).default(0),
+    }),
+    sap: z.object({
+      enabled: z.boolean().default(false),
+      licenses: z.number().min(0).max(1000).default(0),
+    }),
+    microsoftOffice365: z.object({
+      enabled: z.boolean().default(false),
+      licenses: z.number().min(0).max(10000).default(0),
+    }),
+  }),
   // Compute Services
   compute: z.object({
     vcpus: z.number().min(1).max(128),
@@ -300,6 +334,7 @@ export interface CloudProvider {
   storage: number;
   database: number;
   networking: number;
+  licensing?: number;
   analytics?: number;
   ai?: number;
   security?: number;
@@ -317,6 +352,8 @@ export interface CloudProvider {
   total: number;
   carbonFootprint?: number; // CO2 tons per month
   renewableEnergyPercent?: number; // percentage renewable energy
+  currency?: string; // Selected currency (USD, INR, EUR, KWD)
+  currencySymbol?: string; // Currency symbol ($, ₹, €, د.ك)
 }
 
 export interface CostCalculationResult {
