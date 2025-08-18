@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Search, Star, Plus, Settings, BarChart3 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, Search, Star, Plus, Settings, BarChart3, Cog, X } from "lucide-react";
 import { Cloud, Database, Cpu, Network } from "lucide-react";
 
 interface Service {
@@ -20,11 +24,40 @@ interface Service {
   icon: string;
 }
 
+interface ServiceConfiguration {
+  service: Service;
+  // Compute Configuration
+  instanceType?: string;
+  vCPUs?: number;
+  memory?: number;
+  operatingSystem?: string;
+  usage?: number;
+  // Storage Configuration  
+  storageType?: string;
+  capacity?: number;
+  iops?: number;
+  throughput?: number;
+  // Database Configuration
+  engine?: string;
+  instanceClass?: string;
+  multiAZ?: boolean;
+  backupRetention?: number;
+  // Networking Configuration
+  dataTransfer?: number;
+  loadBalancer?: boolean;
+  // Advanced Options
+  region?: string;
+  reservationType?: string;
+  customMonthlyCost?: number;
+}
+
 export default function Calculator() {
   const [selectedTab, setSelectedTab] = useState("services");
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [estimateName, setEstimateName] = useState("My Estimate");
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+  const [configurationModal, setConfigurationModal] = useState<Service | null>(null);
+  const [serviceConfigurations, setServiceConfigurations] = useState<ServiceConfiguration[]>([]);
 
   const services: Service[] = [
     // Compute Services
@@ -250,34 +283,7 @@ export default function Calculator() {
     }
   ];
 
-  const getProviderIcon = (provider: string, serviceType?: string) => {
-    const getServiceIcon = () => {
-      switch(serviceType?.toLowerCase()) {
-        case "compute": return <Cpu className="w-4 h-4" />;
-        case "storage": return <Cloud className="w-4 h-4" />;
-        case "database": return <Database className="w-4 h-4" />;
-        case "networking": return <Network className="w-4 h-4" />;
-        default: return <Cloud className="w-4 h-4" />;
-      }
-    };
 
-    const getProviderBadge = () => {
-      switch(provider.toLowerCase()) {
-        case "aws": return <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-medium">AWS</span>;
-        case "azure": return <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">Azure</span>;
-        case "gcp": return <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">GCP</span>;
-        case "oracle cloud": return <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">Oracle</span>;
-        default: return null;
-      }
-    };
-
-    return (
-      <div className="flex items-center space-x-2">
-        {getServiceIcon()}
-        {getProviderBadge()}
-      </div>
-    );
-  };
 
   const computeShapes = [
     {
@@ -322,11 +328,45 @@ export default function Calculator() {
     }
   ];
 
+  const openServiceConfiguration = (service: Service) => {
+    setConfigurationModal(service);
+  };
+
+  const addConfiguredService = (config: ServiceConfiguration) => {
+    setServiceConfigurations([...serviceConfigurations, config]);
+    setSelectedServices([...selectedServices, config.service]);
+    // Calculate cost based on configuration
+    const monthlyCost = config.customMonthlyCost || calculateServiceCost(config);
+    setEstimatedCost(estimatedCost + monthlyCost);
+    setConfigurationModal(null);
+  };
+
+  const calculateServiceCost = (config: ServiceConfiguration): number => {
+    const basePrice = parseFloat(config.service.startingPrice.match(/\d+\.?\d*/)?.[0] || "0");
+    let multiplier = 1;
+
+    // Apply configuration-based multipliers
+    if (config.vCPUs) multiplier *= config.vCPUs;
+    if (config.memory) multiplier *= (config.memory / 4); // Assume 4GB base
+    if (config.capacity) multiplier *= (config.capacity / 100); // Assume 100GB base
+    if (config.usage) multiplier *= (config.usage / 100); // Usage percentage
+
+    // Apply service type specific calculations
+    switch (config.service.type.toLowerCase()) {
+      case "compute":
+        return basePrice * multiplier * 24 * 30; // Convert hourly to monthly
+      case "storage":
+        return basePrice * (config.capacity || 100); // Price per GB
+      case "database":
+        return basePrice * multiplier * 24 * 30;
+      default:
+        return basePrice * 30; // Default monthly calculation
+    }
+  };
+
   const addService = (service: Service) => {
-    setSelectedServices([...selectedServices, service]);
-    // Update estimated cost (simplified calculation)
-    const cost = parseFloat(service.startingPrice.match(/\d+\.?\d*/)?.[0] || "0") * 24 * 30; // Rough monthly estimate
-    setEstimatedCost(estimatedCost + cost);
+    // Open configuration modal instead of directly adding
+    openServiceConfiguration(service);
   };
 
   return (
@@ -605,7 +645,483 @@ export default function Calculator() {
             )}
           </div>
         </div>
+
+        {/* Service Configuration Modal */}
+        {configurationModal && (
+          <ServiceConfigurationModal
+            service={configurationModal}
+            onSave={addConfiguredService}
+            onClose={() => setConfigurationModal(null)}
+          />
+        )}
       </div>
+    </div>
+  );
+}
+
+// Service Configuration Modal Component
+function ServiceConfigurationModal({ 
+  service, 
+  onSave, 
+  onClose 
+}: { 
+  service: Service;
+  onSave: (config: ServiceConfiguration) => void;
+  onClose: () => void;
+}) {
+  const [config, setConfig] = useState<ServiceConfiguration>({
+    service,
+    region: "us-east-1",
+    reservationType: "on-demand",
+    vCPUs: 2,
+    memory: 8,
+    usage: 80,
+    capacity: 100,
+    operatingSystem: "linux"
+  });
+
+  const handleSave = () => {
+    onSave(config);
+  };
+
+  const renderComputeConfig = () => (
+    <div className="space-y-6">
+      <div>
+        <Label className="text-sm font-medium">Instance Type</Label>
+        <Select value={config.instanceType} onValueChange={(value) => setConfig({...config, instanceType: value})}>
+          <SelectTrigger className="w-full mt-2">
+            <SelectValue placeholder="Select instance type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="t3.micro">t3.micro (1 vCPU, 1GB RAM)</SelectItem>
+            <SelectItem value="t3.small">t3.small (2 vCPU, 2GB RAM)</SelectItem>
+            <SelectItem value="t3.medium">t3.medium (2 vCPU, 4GB RAM)</SelectItem>
+            <SelectItem value="m5.large">m5.large (2 vCPU, 8GB RAM)</SelectItem>
+            <SelectItem value="m5.xlarge">m5.xlarge (4 vCPU, 16GB RAM)</SelectItem>
+            <SelectItem value="c5.large">c5.large (2 vCPU, 4GB RAM) - Compute Optimized</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">vCPUs: {config.vCPUs}</Label>
+        <Slider
+          value={[config.vCPUs || 2]}
+          onValueChange={(value) => setConfig({...config, vCPUs: value[0]})}
+          max={32}
+          min={1}
+          step={1}
+          className="mt-2"
+        />
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Memory (GB): {config.memory}</Label>
+        <Slider
+          value={[config.memory || 8]}
+          onValueChange={(value) => setConfig({...config, memory: value[0]})}
+          max={128}
+          min={1}
+          step={1}
+          className="mt-2"
+        />
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Operating System</Label>
+        <Select value={config.operatingSystem} onValueChange={(value) => setConfig({...config, operatingSystem: value})}>
+          <SelectTrigger className="w-full mt-2">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="linux">Linux</SelectItem>
+            <SelectItem value="windows">Windows Server</SelectItem>
+            <SelectItem value="rhel">Red Hat Enterprise Linux</SelectItem>
+            <SelectItem value="suse">SUSE Linux</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Monthly Usage (%): {config.usage}</Label>
+        <Slider
+          value={[config.usage || 80]}
+          onValueChange={(value) => setConfig({...config, usage: value[0]})}
+          max={100}
+          min={1}
+          step={1}
+          className="mt-2"
+        />
+        <div className="text-xs text-gray-500 mt-1">
+          {Math.round(((config.usage || 80) / 100) * 24 * 30)} hours/month
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStorageConfig = () => (
+    <div className="space-y-6">
+      <div>
+        <Label className="text-sm font-medium">Storage Type</Label>
+        <Select value={config.storageType} onValueChange={(value) => setConfig({...config, storageType: value})}>
+          <SelectTrigger className="w-full mt-2">
+            <SelectValue placeholder="Select storage type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="standard">Standard (HDD)</SelectItem>
+            <SelectItem value="gp3">General Purpose SSD (gp3)</SelectItem>
+            <SelectItem value="gp2">General Purpose SSD (gp2)</SelectItem>
+            <SelectItem value="io2">Provisioned IOPS SSD (io2)</SelectItem>
+            <SelectItem value="st1">Throughput Optimized HDD</SelectItem>
+            <SelectItem value="sc1">Cold HDD</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Capacity (GB): {config.capacity}</Label>
+        <Slider
+          value={[config.capacity || 100]}
+          onValueChange={(value) => setConfig({...config, capacity: value[0]})}
+          max={10000}
+          min={1}
+          step={10}
+          className="mt-2"
+        />
+      </div>
+
+      {(config.storageType === "io2" || config.storageType === "gp3") && (
+        <div>
+          <Label className="text-sm font-medium">IOPS: {config.iops || 3000}</Label>
+          <Slider
+            value={[config.iops || 3000]}
+            onValueChange={(value) => setConfig({...config, iops: value[0]})}
+            max={16000}
+            min={100}
+            step={100}
+            className="mt-2"
+          />
+        </div>
+      )}
+
+      {config.storageType === "gp3" && (
+        <div>
+          <Label className="text-sm font-medium">Throughput (MB/s): {config.throughput || 125}</Label>
+          <Slider
+            value={[config.throughput || 125]}
+            onValueChange={(value) => setConfig({...config, throughput: value[0]})}
+            max={1000}
+            min={125}
+            step={25}
+            className="mt-2"
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  const renderDatabaseConfig = () => (
+    <div className="space-y-6">
+      <div>
+        <Label className="text-sm font-medium">Database Engine</Label>
+        <Select value={config.engine} onValueChange={(value) => setConfig({...config, engine: value})}>
+          <SelectTrigger className="w-full mt-2">
+            <SelectValue placeholder="Select database engine" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="mysql">MySQL</SelectItem>
+            <SelectItem value="postgresql">PostgreSQL</SelectItem>
+            <SelectItem value="oracle">Oracle Database</SelectItem>
+            <SelectItem value="sqlserver">SQL Server</SelectItem>
+            <SelectItem value="aurora">Aurora (MySQL/PostgreSQL)</SelectItem>
+            <SelectItem value="mariadb">MariaDB</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Instance Class</Label>
+        <Select value={config.instanceClass} onValueChange={(value) => setConfig({...config, instanceClass: value})}>
+          <SelectTrigger className="w-full mt-2">
+            <SelectValue placeholder="Select instance class" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="db.t3.micro">db.t3.micro (1 vCPU, 1GB)</SelectItem>
+            <SelectItem value="db.t3.small">db.t3.small (2 vCPU, 2GB)</SelectItem>
+            <SelectItem value="db.t3.medium">db.t3.medium (2 vCPU, 4GB)</SelectItem>
+            <SelectItem value="db.m5.large">db.m5.large (2 vCPU, 8GB)</SelectItem>
+            <SelectItem value="db.m5.xlarge">db.m5.xlarge (4 vCPU, 16GB)</SelectItem>
+            <SelectItem value="db.r5.large">db.r5.large (2 vCPU, 16GB) - Memory Optimized</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Storage (GB): {config.capacity}</Label>
+        <Slider
+          value={[config.capacity || 100]}
+          onValueChange={(value) => setConfig({...config, capacity: value[0]})}
+          max={5000}
+          min={20}
+          step={10}
+          className="mt-2"
+        />
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="multiAZ"
+          checked={config.multiAZ || false}
+          onChange={(e) => setConfig({...config, multiAZ: e.target.checked})}
+        />
+        <Label htmlFor="multiAZ" className="text-sm">Multi-AZ Deployment (+100% cost)</Label>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium">Backup Retention (days): {config.backupRetention || 7}</Label>
+        <Slider
+          value={[config.backupRetention || 7]}
+          onValueChange={(value) => setConfig({...config, backupRetention: value[0]})}
+          max={35}
+          min={1}
+          step={1}
+          className="mt-2"
+        />
+      </div>
+    </div>
+  );
+
+  const renderNetworkingConfig = () => (
+    <div className="space-y-6">
+      <div>
+        <Label className="text-sm font-medium">Data Transfer (GB/month): {config.dataTransfer || 100}</Label>
+        <Slider
+          value={[config.dataTransfer || 100]}
+          onValueChange={(value) => setConfig({...config, dataTransfer: value[0]})}
+          max={10000}
+          min={1}
+          step={10}
+          className="mt-2"
+        />
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="loadBalancer"
+          checked={config.loadBalancer || false}
+          onChange={(e) => setConfig({...config, loadBalancer: e.target.checked})}
+        />
+        <Label htmlFor="loadBalancer" className="text-sm">Include Load Balancer (+$20/month)</Label>
+      </div>
+    </div>
+  );
+
+  const getEstimatedCost = () => {
+    const basePrice = parseFloat(service.startingPrice.match(/\d+\.?\d*/)?.[0] || "0");
+    let monthlyCost = 0;
+
+    switch (service.type.toLowerCase()) {
+      case "compute":
+        monthlyCost = basePrice * (config.vCPUs || 2) * (config.memory || 8) / 4 * ((config.usage || 80) / 100) * 24 * 30;
+        break;
+      case "storage":
+        monthlyCost = basePrice * (config.capacity || 100);
+        if (config.iops && config.iops > 3000) monthlyCost += (config.iops - 3000) * 0.065;
+        break;
+      case "database":
+        monthlyCost = basePrice * 24 * 30;
+        if (config.multiAZ) monthlyCost *= 2;
+        monthlyCost += (config.capacity || 100) * 0.115; // Add storage cost
+        break;
+      case "networking":
+        monthlyCost = (config.dataTransfer || 100) * 0.09;
+        if (config.loadBalancer) monthlyCost += 20;
+        break;
+      default:
+        monthlyCost = basePrice * 30;
+    }
+
+    return Math.round(monthlyCost * 100) / 100;
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Configure {service.name}</span>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="w-4 h-4" />
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Provider and Service Info */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center space-x-3">
+              {getProviderIcon(service.provider, service.type)}
+              <div>
+                <div className="font-medium">{service.name}</div>
+                <div className="text-sm text-gray-600">{service.description}</div>
+              </div>
+            </div>
+            <Badge variant="outline">{service.provider}</Badge>
+          </div>
+
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="basic">Basic</TabsTrigger>
+              <TabsTrigger value="advanced">Advanced</TabsTrigger>
+              <TabsTrigger value="pricing">Pricing</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="basic" className="space-y-4">
+              {/* Region Selection */}
+              <div>
+                <Label className="text-sm font-medium">Region</Label>
+                <Select value={config.region} onValueChange={(value) => setConfig({...config, region: value})}>
+                  <SelectTrigger className="w-full mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="us-east-1">US East (N. Virginia)</SelectItem>
+                    <SelectItem value="us-west-2">US West (Oregon)</SelectItem>
+                    <SelectItem value="eu-west-1">Europe (Ireland)</SelectItem>
+                    <SelectItem value="ap-southeast-1">Asia Pacific (Singapore)</SelectItem>
+                    <SelectItem value="ap-northeast-1">Asia Pacific (Tokyo)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Service-specific configuration */}
+              {service.type.toLowerCase() === "compute" && renderComputeConfig()}
+              {service.type.toLowerCase() === "storage" && renderStorageConfig()}
+              {service.type.toLowerCase() === "database" && renderDatabaseConfig()}
+              {service.type.toLowerCase() === "networking" && renderNetworkingConfig()}
+            </TabsContent>
+
+            <TabsContent value="advanced" className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Reservation Type</Label>
+                <Select value={config.reservationType} onValueChange={(value) => setConfig({...config, reservationType: value})}>
+                  <SelectTrigger className="w-full mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="on-demand">On-Demand</SelectItem>
+                    <SelectItem value="reserved-1yr">Reserved (1 year) - 30% discount</SelectItem>
+                    <SelectItem value="reserved-3yr">Reserved (3 year) - 50% discount</SelectItem>
+                    <SelectItem value="spot">Spot Instance - 60% discount</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Custom Monthly Cost Override</Label>
+                <Input
+                  type="number"
+                  placeholder="Leave empty for auto-calculation"
+                  value={config.customMonthlyCost || ""}
+                  onChange={(e) => setConfig({...config, customMonthlyCost: e.target.value ? parseFloat(e.target.value) : undefined})}
+                  className="mt-2"
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="pricing" className="space-y-4">
+              <div className="p-6 bg-blue-50 rounded-lg">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600">${getEstimatedCost()}</div>
+                  <div className="text-sm text-gray-600">Estimated Monthly Cost</div>
+                </div>
+
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Base Cost:</span>
+                    <span>{service.startingPrice}</span>
+                  </div>
+                  {service.type.toLowerCase() === "compute" && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>vCPUs × Memory:</span>
+                        <span>{config.vCPUs} × {config.memory}GB</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Usage:</span>
+                        <span>{config.usage}%</span>
+                      </div>
+                    </>
+                  )}
+                  {service.type.toLowerCase() === "storage" && (
+                    <div className="flex justify-between">
+                      <span>Capacity:</span>
+                      <span>{config.capacity}GB</span>
+                    </div>
+                  )}
+                  {config.multiAZ && (
+                    <div className="flex justify-between text-orange-600">
+                      <span>Multi-AZ:</span>
+                      <span>×2 cost</span>
+                    </div>
+                  )}
+                  {config.reservationType !== "on-demand" && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Reservation Discount:</span>
+                      <span>
+                        {config.reservationType === "reserved-1yr" && "-30%"}
+                        {config.reservationType === "reserved-3yr" && "-50%"}
+                        {config.reservationType === "spot" && "-60%"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+              Add to Estimate
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Helper function for provider icons (moved outside component)
+function getProviderIcon(provider: string, serviceType?: string) {
+  const getServiceIcon = () => {
+    switch(serviceType?.toLowerCase()) {
+      case "compute": return <Cpu className="w-4 h-4" />;
+      case "storage": return <Cloud className="w-4 h-4" />;
+      case "database": return <Database className="w-4 h-4" />;
+      case "networking": return <Network className="w-4 h-4" />;
+      default: return <Cloud className="w-4 h-4" />;
+    }
+  };
+
+  const getProviderBadge = () => {
+    switch(provider.toLowerCase()) {
+      case "aws": return <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-medium">AWS</span>;
+      case "azure": return <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">Azure</span>;
+      case "gcp": return <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">GCP</span>;
+      case "oracle cloud": return <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">Oracle</span>;
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="flex items-center space-x-2">
+      {getServiceIcon()}
+      {getProviderBadge()}
     </div>
   );
 }
