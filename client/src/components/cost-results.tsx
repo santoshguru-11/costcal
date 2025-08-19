@@ -129,7 +129,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                   <TableCell className="font-medium">Storage</TableCell>
                   {results.providers.map((provider) => (
                     <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                      ${provider.storage}/mo
+                      {provider.currencySymbol || '$'}{provider.storage}/mo
                     </TableCell>
                   ))}
                 </TableRow>
@@ -137,7 +137,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                   <TableCell className="font-medium">Database</TableCell>
                   {results.providers.map((provider) => (
                     <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                      ${provider.database}/mo
+                      {provider.currencySymbol || '$'}{provider.database}/mo
                     </TableCell>
                   ))}
                 </TableRow>
@@ -145,7 +145,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                   <TableCell className="font-medium">Networking</TableCell>
                   {results.providers.map((provider) => (
                     <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                      ${provider.networking}/mo
+                      {provider.currencySymbol || '$'}{provider.networking}/mo
                     </TableCell>
                   ))}
                 </TableRow>
@@ -154,7 +154,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Analytics</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.analytics || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.analytics || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -164,7 +164,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">AI/ML</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.ai || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.ai || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -174,7 +174,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Security</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.security || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.security || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -184,7 +184,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Monitoring</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.monitoring || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.monitoring || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -194,7 +194,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">DevOps</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.devops || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.devops || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -204,7 +204,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Backup</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.backup || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.backup || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -214,7 +214,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">IoT</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.iot || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.iot || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -224,7 +224,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Media</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.media || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.media || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -234,7 +234,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Quantum Computing</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.quantum || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.quantum || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -244,7 +244,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Advanced AI/ML</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.advancedAI || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.advancedAI || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -254,7 +254,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Edge & 5G</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.edge || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.edge || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -264,7 +264,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Confidential Computing</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.confidential || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.confidential || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -274,7 +274,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Sustainability Services</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.sustainability || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.sustainability || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -284,7 +284,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                     <TableCell className="font-medium">Advanced Scenarios</TableCell>
                     {results.providers.map((provider) => (
                       <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
-                        ${provider.scenarios || 0}/mo
+                        {provider.currencySymbol || '$'}{provider.scenarios || 0}/mo
                       </TableCell>
                     ))}
                   </TableRow>
@@ -293,7 +293,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
                   <TableCell className="font-bold">Total Monthly Cost</TableCell>
                   {results.providers.map((provider) => (
                     <TableCell key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-bold" : "font-semibold"}>
-                      ${provider.total}/mo
+                      {provider.currencySymbol || '$'}{provider.total}/mo
                     </TableCell>
                   ))}
                 </TableRow>

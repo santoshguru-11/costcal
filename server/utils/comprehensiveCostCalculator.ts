@@ -102,8 +102,8 @@ export class ComprehensiveCostCalculator {
       potentialSavings,
       multiCloudOption,
       recommendations: {
-        singleCloud: `${cheapest.name} offers the best overall value at $${cheapest.total}/month with comprehensive service coverage and competitive pricing across all categories`,
-        multiCloud: `Hybrid approach could save an additional $${Math.round((cheapest.total - multiCloudOption.cost) * 100) / 100}/month by optimizing service placement across providers`
+        singleCloud: `${cheapest.name} offers the best overall value at ${cheapest.currencySymbol}${cheapest.total}/month with comprehensive service coverage and competitive pricing across all categories`,
+        multiCloud: `Hybrid approach could save an additional ${cheapest.currencySymbol}${Math.round((cheapest.total - multiCloudOption.cost) * 100) / 100}/month by optimizing service placement across providers`
       }
     };
   }
