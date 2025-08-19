@@ -102,10 +102,12 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Service</TableHead>
-                  <TableHead>AWS</TableHead>
-                  <TableHead>Azure</TableHead>
-                  <TableHead>GCP</TableHead>
-                  <TableHead>Oracle Cloud</TableHead>
+                  {results.providers.map((provider) => (
+                    <TableHead key={provider.name} className={provider.name === results.cheapest.name ? "text-green-600 font-semibold" : ""}>
+                      {provider.name}
+                      {provider.name === results.cheapest.name && " 🏆"}
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
