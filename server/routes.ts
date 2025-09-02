@@ -3,9 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ComprehensiveCostCalculator } from "./utils/comprehensiveCostCalculator";
 import { infrastructureRequirementsSchema } from "@shared/schema";
+import { CloudInventoryService, type InventoryScanRequest } from "./services/inventory-service.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const costCalculator = new ComprehensiveCostCalculator();
+  const inventoryService = new CloudInventoryService();
 
   // Calculate costs endpoint
   app.post("/api/calculate", async (req, res) => {
@@ -77,6 +79,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Export CSV error:", error);
       res.status(500).json({ message: "Failed to export CSV" });
+    }
+  });
+
+  // Inventory scanning endpoints
+  app.post("/api/inventory/scan", async (req, res) => {
+    try {
+      const scanRequest: InventoryScanRequest = req.body;
+      const inventory = await inventoryService.scanMultipleProviders(scanRequest);
+      
+      res.json({
+        success: true,
+        inventory
+      });
+    } catch (error) {
+      console.error("Inventory scan error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to scan cloud resources" 
+      });
+    }
+  });
+
+  // Generate cost analysis from inventory
+  app.post("/api/inventory/analyze-costs", async (req, res) => {
+    try {
+      const { inventory } = req.body;
+      const analysis = await inventoryService.generateAutomaticCostAnalysis(inventory);
+      
+      res.json({
+        success: true,
+        analysis
+      });
+    } catch (error) {
+      console.error("Inventory cost analysis error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to analyze inventory costs" 
+      });
+    }
+  });
+
+  // Validate cloud credentials
+  app.post("/api/inventory/validate-credentials", async (req, res) => {
+    try {
+      const { provider, credentials } = req.body;
+      
+      // This is a basic validation - in production, you'd make a simple API call to verify
+      let isValid = false;
+      let message = "";
+
+      switch (provider) {
+        case 'aws':
+          isValid = credentials.accessKeyId && credentials.secretAccessKey && credentials.region;
+          message = isValid ? "AWS credentials are valid" : "Missing AWS credentials fields";
+          break;
+        case 'azure':
+          isValid = credentials.clientId && credentials.clientSecret && credentials.tenantId && credentials.subscriptionId;
+          message = isValid ? "Azure credentials are valid" : "Missing Azure credentials fields";
+          break;
+        case 'gcp':
+          isValid = credentials.projectId && (credentials.keyFilename || credentials.credentials);
+          message = isValid ? "GCP credentials are valid" : "Missing GCP credentials fields";
+          break;
+        default:
+          isValid = false;
+          message = "Unsupported cloud provider";
+      }
+
+      res.json({
+        valid: isValid,
+        message
+      });
+    } catch (error) {
+      console.error("Credential validation error:", error);
+      res.status(500).json({ 
+        valid: false,
+        message: "Failed to validate credentials" 
+      });
     }
   });
 

@@ -26,6 +26,13 @@ export default function Navbar() {
               }`}>
                 Dashboard
               </Link>
+              <Link href="/inventory" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location === "/inventory" 
+                  ? "text-slate-900 hover:text-primary" 
+                  : "text-slate-600 hover:text-primary"
+              }`}>
+                Inventory
+              </Link>
               <Link href="/calculator" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 location === "/calculator" 
                   ? "text-slate-900 hover:text-primary" 

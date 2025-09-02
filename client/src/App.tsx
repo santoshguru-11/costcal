@@ -8,6 +8,7 @@ import Navbar from "@/components/navbar";
 import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
 import Results from "@/pages/results";
+import { InventoryPage } from "@/pages/inventory";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/calculator" component={Calculator} />
+      <Route path="/inventory" component={InventoryPage} />
       <Route path="/results/:id" component={Results} />
       <Route component={NotFound} />
     </Switch>
