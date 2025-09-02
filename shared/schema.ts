@@ -1,22 +1,121 @@
-import { pgTable, text, varchar, integer, decimal, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, jsonb, timestamp, boolean, index } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
+
+// Session storage table for authentication
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table for authentication
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Cloud credentials storage (encrypted)
+export const cloudCredentials = pgTable("cloud_credentials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  provider: varchar("provider").notNull(), // aws, azure, gcp
+  name: varchar("name").notNull(),
+  encryptedCredentials: text("encrypted_credentials").notNull(),
+  isValidated: boolean("is_validated").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Inventory scans storage
+export const inventoryScans = pgTable("inventory_scans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  scanData: jsonb("scan_data").notNull(),
+  summary: jsonb("summary").notNull(),
+  scanDuration: integer("scan_duration").notNull(), // milliseconds
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const costAnalyses = pgTable("cost_analyses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  inventoryScanId: varchar("inventory_scan_id"),
   requirements: jsonb("requirements").notNull(),
   results: jsonb("results").notNull(),
-  createdAt: text("created_at").default(sql`now()`),
+  createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  cloudCredentials: many(cloudCredentials),
+  inventoryScans: many(inventoryScans),
+  costAnalyses: many(costAnalyses),
+}));
+
+export const cloudCredentialsRelations = relations(cloudCredentials, ({ one }) => ({
+  user: one(users, {
+    fields: [cloudCredentials.userId],
+    references: [users.id],
+  }),
+}));
+
+export const inventoryScansRelations = relations(inventoryScans, ({ one, many }) => ({
+  user: one(users, {
+    fields: [inventoryScans.userId],
+    references: [users.id],
+  }),
+  costAnalyses: many(costAnalyses),
+}));
+
+export const costAnalysesRelations = relations(costAnalyses, ({ one }) => ({
+  user: one(users, {
+    fields: [costAnalyses.userId],
+    references: [users.id],
+  }),
+  inventoryScan: one(inventoryScans, {
+    fields: [costAnalyses.inventoryScanId],
+    references: [inventoryScans.id],
+  }),
+}));
 
 export const insertCostAnalysisSchema = createInsertSchema(costAnalyses).pick({
   requirements: true,
   results: true,
+  inventoryScanId: true,
 });
 
+export const insertCloudCredentialSchema = createInsertSchema(cloudCredentials).pick({
+  provider: true,
+  name: true,
+  encryptedCredentials: true,
+});
+
+export const insertInventoryScanSchema = createInsertSchema(inventoryScans).pick({
+  scanData: true,
+  summary: true,
+  scanDuration: true,
+});
+
+export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
 export type InsertCostAnalysis = z.infer<typeof insertCostAnalysisSchema>;
 export type CostAnalysis = typeof costAnalyses.$inferSelect;
+export type InsertCloudCredential = z.infer<typeof insertCloudCredentialSchema>;
+export type CloudCredential = typeof cloudCredentials.$inferSelect;
+export type InsertInventoryScan = z.infer<typeof insertInventoryScanSchema>;
+export type InventoryScan = typeof inventoryScans.$inferSelect;
 
 // Frontend-specific schemas for form validation
 export const infrastructureRequirementsSchema = z.object({
