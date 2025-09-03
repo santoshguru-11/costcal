@@ -261,7 +261,7 @@ export class CloudInventoryService {
 
     // Aggregate compute resources
     const computeResources = inventory.resources.filter(r => 
-      r.service === 'EC2' || r.service === 'Compute Engine' || r.service.includes('Virtual')
+      r.service === 'EC2' || r.service === 'Compute Engine' || r.service.includes('Virtual') || r.service === 'OCI Compute'
     );
 
     computeResources.forEach(resource => {
@@ -274,7 +274,7 @@ export class CloudInventoryService {
 
     // Aggregate storage resources
     const storageResources = inventory.resources.filter(r => 
-      r.service === 'S3' || r.service === 'Cloud Storage' || r.service === 'EBS' || r.type === 'Bucket'
+      r.service === 'S3' || r.service === 'Cloud Storage' || r.service === 'EBS' || r.type === 'Bucket' || r.service === 'OCI Storage'
     );
 
     storageResources.forEach(resource => {
@@ -289,7 +289,7 @@ export class CloudInventoryService {
 
     // Aggregate database resources
     const dbResources = inventory.resources.filter(r => 
-      r.service === 'RDS' || r.service === 'Cloud SQL' || r.type.includes('SQL')
+      r.service === 'RDS' || r.service === 'Cloud SQL' || r.type.includes('SQL') || r.service === 'OCI Database'
     );
 
     dbResources.forEach(resource => {
