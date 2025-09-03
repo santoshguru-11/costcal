@@ -30,7 +30,7 @@ export const users = pgTable("users", {
 export const cloudCredentials = pgTable("cloud_credentials", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
-  provider: varchar("provider").notNull(), // aws, azure, gcp
+  provider: varchar("provider").notNull(), // aws, azure, gcp, oci
   name: varchar("name").notNull(),
   encryptedCredentials: text("encrypted_credentials").notNull(),
   isValidated: boolean("is_validated").default(false),

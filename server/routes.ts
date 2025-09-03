@@ -509,6 +509,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isValid = credentials.projectId && (credentials.keyFilename || credentials.credentials);
           message = isValid ? "GCP credentials are valid" : "Missing GCP credentials fields";
           break;
+        case 'oci':
+          isValid = credentials.tenancyId && credentials.userId && credentials.fingerprint && credentials.privateKey && credentials.region;
+          message = isValid ? "Oracle Cloud credentials are valid" : "Missing Oracle Cloud credentials fields";
+          break;
         default:
           isValid = false;
           message = "Unsupported cloud provider";

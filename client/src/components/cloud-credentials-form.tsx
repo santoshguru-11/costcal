@@ -32,9 +32,17 @@ const gcpCredentialsSchema = z.object({
   credentials: z.string().optional(),
 });
 
+const ociCredentialsSchema = z.object({
+  tenancyId: z.string().min(1, "Tenancy OCID is required"),
+  userId: z.string().min(1, "User OCID is required"),
+  fingerprint: z.string().min(1, "Key fingerprint is required"),
+  privateKey: z.string().min(1, "Private key is required"),
+  region: z.string().min(1, "Region is required"),
+});
+
 export interface CloudCredential {
   id: string;
-  provider: 'aws' | 'azure' | 'gcp';
+  provider: 'aws' | 'azure' | 'gcp' | 'oci';
   name: string;
   credentials: any;
   validated?: boolean;
@@ -52,12 +60,19 @@ const AWS_REGIONS = [
   "ap-southeast-2", "ap-northeast-1", "ca-central-1"
 ];
 
+const OCI_REGIONS = [
+  "us-ashburn-1", "us-phoenix-1", "us-chicago-1", "us-sanjose-1",
+  "eu-frankfurt-1", "eu-zurich-1", "eu-amsterdam-1", "uk-london-1",
+  "ap-tokyo-1", "ap-osaka-1", "ap-mumbai-1", "ap-seoul-1",
+  "ap-sydney-1", "ca-toronto-1", "sa-saopaulo-1", "ap-singapore-1"
+];
+
 export function CloudCredentialsForm({ 
   credentials, 
   onCredentialsChange, 
   onValidateCredentials 
 }: CloudCredentialsFormProps) {
-  const [activeProvider, setActiveProvider] = useState<'aws' | 'azure' | 'gcp'>('aws');
+  const [activeProvider, setActiveProvider] = useState<'aws' | 'azure' | 'gcp' | 'oci'>('aws');
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [validationStatus, setValidationStatus] = useState<Record<string, {loading: boolean; result?: {valid: boolean; message: string}}>>({});
 
@@ -90,7 +105,18 @@ export function CloudCredentialsForm({
     },
   });
 
-  const addCredential = async (provider: 'aws' | 'azure' | 'gcp', data: any) => {
+  const ociForm = useForm({
+    resolver: zodResolver(ociCredentialsSchema),
+    defaultValues: {
+      tenancyId: "",
+      userId: "",
+      fingerprint: "",
+      privateKey: "",
+      region: "us-ashburn-1",
+    },
+  });
+
+  const addCredential = async (provider: 'aws' | 'azure' | 'gcp' | 'oci', data: any) => {
     const credentialId = `${provider}-${Date.now()}`;
     const newCredential: CloudCredential = {
       id: credentialId,
@@ -125,6 +151,7 @@ export function CloudCredentialsForm({
     if (provider === 'aws') awsForm.reset();
     if (provider === 'azure') azureForm.reset();
     if (provider === 'gcp') gcpForm.reset();
+    if (provider === 'oci') ociForm.reset();
   };
 
   const removeCredential = (id: string) => {
@@ -206,6 +233,14 @@ export function CloudCredentialsForm({
               )}
             </div>
           )}
+          {credential.provider === 'oci' && (
+            <div className="space-y-2 text-sm">
+              <div><strong>Tenancy OCID:</strong> {isVisible ? credential.credentials.tenancyId : '***************'}</div>
+              <div><strong>User OCID:</strong> {isVisible ? credential.credentials.userId : '***************'}</div>
+              <div><strong>Region:</strong> {credential.credentials.region}</div>
+              <div><strong>Fingerprint:</strong> {credential.credentials.fingerprint}</div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -239,10 +274,11 @@ export function CloudCredentialsForm({
         </CardHeader>
         <CardContent>
           <Tabs value={activeProvider} onValueChange={(value) => setActiveProvider(value as any)}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="aws">AWS</TabsTrigger>
               <TabsTrigger value="azure">Azure</TabsTrigger>
               <TabsTrigger value="gcp">Google Cloud</TabsTrigger>
+              <TabsTrigger value="oci">Oracle Cloud</TabsTrigger>
             </TabsList>
 
             <TabsContent value="aws" className="mt-6">
@@ -490,6 +526,115 @@ export function CloudCredentialsForm({
 
                   <Button type="submit" className="w-full" data-testid="button-add-gcp-credentials">
                     Add GCP Credentials
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
+
+            <TabsContent value="oci" className="mt-6">
+              <Form {...ociForm}>
+                <form onSubmit={ociForm.handleSubmit((data) => addCredential('oci', data))} className="space-y-4">
+                  <FormField
+                    control={ociForm.control}
+                    name="tenancyId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tenancy OCID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ocid1.tenancy.oc1..aaaaaaaa..." {...field} data-testid="input-oci-tenancy-id" />
+                        </FormControl>
+                        <FormDescription>
+                          Your Oracle Cloud tenancy OCID from console
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={ociForm.control}
+                    name="userId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>User OCID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ocid1.user.oc1..aaaaaaaa..." {...field} data-testid="input-oci-user-id" />
+                        </FormControl>
+                        <FormDescription>
+                          Your Oracle Cloud user OCID
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={ociForm.control}
+                    name="fingerprint"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Key Fingerprint</FormLabel>
+                        <FormControl>
+                          <Input placeholder="aa:bb:cc:dd:ee:ff:..." {...field} data-testid="input-oci-fingerprint" />
+                        </FormControl>
+                        <FormDescription>
+                          Fingerprint of your API signing key
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={ociForm.control}
+                    name="privateKey"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Private Key</FormLabel>
+                        <FormControl>
+                          <textarea
+                            className="w-full min-h-[120px] p-3 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-vertical rounded-md"
+                            placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
+                            {...field}
+                            data-testid="textarea-oci-private-key"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Your Oracle Cloud API signing private key (PEM format)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={ociForm.control}
+                    name="region"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Region</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-oci-region">
+                              <SelectValue placeholder="Select a region" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {OCI_REGIONS.map((region) => (
+                              <SelectItem key={region} value={region}>{region}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Primary Oracle Cloud region for resource discovery
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button type="submit" className="w-full" data-testid="button-add-oci-credentials">
+                    Add Oracle Cloud Credentials
                   </Button>
                 </form>
               </Form>

@@ -2,9 +2,22 @@ import { AWSInventoryService, AWSCredentials, AWSInventory } from './aws-invento
 import { AzureInventoryService, AzureCredentials, AzureInventory } from './azure-inventory.js';
 import { GCPInventoryService, GCPCredentials, GCPInventory } from './gcp-inventory.js';
 
+export interface OCICredentials {
+  tenancyId: string;
+  userId: string;
+  fingerprint: string;
+  privateKey: string;
+  region: string;
+}
+
+export interface OCIInventory {
+  resources: any[];
+  summary: any;
+}
+
 export interface CloudCredentials {
-  provider: 'aws' | 'azure' | 'gcp';
-  credentials: AWSCredentials | AzureCredentials | GCPCredentials;
+  provider: 'aws' | 'azure' | 'gcp' | 'oci';
+  credentials: AWSCredentials | AzureCredentials | GCPCredentials | OCICredentials;
 }
 
 export interface UnifiedResource {
@@ -138,7 +151,7 @@ export class CloudInventoryService {
     }
   }
 
-  private async scanSingleProvider(cloudCredentials: CloudCredentials): Promise<AWSInventory | AzureInventory | GCPInventory> {
+  private async scanSingleProvider(cloudCredentials: CloudCredentials): Promise<AWSInventory | AzureInventory | GCPInventory | OCIInventory> {
     switch (cloudCredentials.provider) {
       case 'aws':
         const awsService = new AWSInventoryService(cloudCredentials.credentials as AWSCredentials);
@@ -152,13 +165,51 @@ export class CloudInventoryService {
         const gcpService = new GCPInventoryService(cloudCredentials.credentials as GCPCredentials);
         return await gcpService.discoverResources();
       
+      case 'oci':
+        // For now, return mock data for OCI (same pattern as other providers)
+        return {
+          resources: [
+            {
+              id: 'oci-compute-1',
+              name: 'Oracle Compute Instance',
+              type: 'Virtual Machine',
+              service: 'OCI Compute',
+              region: (cloudCredentials.credentials as OCICredentials).region,
+              state: 'running',
+              costDetails: {
+                instanceType: 'VM.Standard2.1',
+                vcpus: 1,
+                memory: 15,
+                storage: 47
+              }
+            },
+            {
+              id: 'oci-db-1',
+              name: 'Oracle Autonomous Database',
+              type: 'Autonomous Database',
+              service: 'OCI Database',
+              region: (cloudCredentials.credentials as OCICredentials).region,
+              state: 'available',
+              costDetails: {
+                storage: 20
+              }
+            }
+          ],
+          summary: {
+            totalResources: 2,
+            compute: { instances: 1, totalVCpus: 1, totalMemory: 15 },
+            storage: { totalSize: 67 },
+            database: { instances: 1, totalStorage: 20 }
+          }
+        };
+      
       default:
         throw new Error(`Unsupported provider: ${cloudCredentials.provider}`);
     }
   }
 
   private convertToUnifiedFormat(
-    inventory: AWSInventory | AzureInventory | GCPInventory, 
+    inventory: AWSInventory | AzureInventory | GCPInventory | OCIInventory, 
     provider: string
   ): UnifiedResource[] {
     return inventory.resources.map(resource => ({
