@@ -1,8 +1,27 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { UserIcon, LogOutIcon } from "lucide-react";
 
 export default function Navbar() {
   const [location] = useLocation();
+  const { isAuthenticated, user, isLoading } = useAuth();
+
+  const handleLogout = () => {
+    window.location.href = "/api/logout";
+  };
+
+  const handleLogin = () => {
+    window.location.href = "/api/login";
+  };
+
+  const navItems = isAuthenticated ? [
+    { href: "/", label: "Dashboard" },
+    { href: "/calculator", label: "Calculator" },
+    { href: "/inventory", label: "Inventory" },
+    { href: "/credentials", label: "Credentials" },
+    { href: "/terraform", label: "Terraform" },
+  ] : [];
 
   return (
     <header className="bg-white shadow-sm border-b border-slate-200">
@@ -17,35 +36,52 @@ export default function Navbar() {
               </Link>
             </div>
           </div>
-          <nav className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              <Link href="/" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                location === "/" 
-                  ? "text-slate-900 hover:text-primary" 
-                  : "text-slate-600 hover:text-primary"
-              }`}>
-                Dashboard
-              </Link>
-              <Link href="/inventory" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                location === "/inventory" 
-                  ? "text-slate-900 hover:text-primary" 
-                  : "text-slate-600 hover:text-primary"
-              }`}>
-                Inventory
-              </Link>
-              <Link href="/calculator" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                location === "/calculator" 
-                  ? "text-slate-900 hover:text-primary" 
-                  : "text-slate-600 hover:text-primary"
-              }`}>
-                Calculator
-              </Link>
-            </div>
-          </nav>
+          
+          {isAuthenticated && (
+            <nav className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      location === item.href 
+                        ? "text-slate-900 hover:text-primary" 
+                        : "text-slate-600 hover:text-primary"
+                    }`}
+                    data-testid={`nav-link-${item.label.toLowerCase()}`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          )}
+          
           <div className="flex items-center space-x-4">
-            <Button className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-              Sign In
-            </Button>
+            {isLoading ? (
+              <div className="text-sm text-gray-500">Loading...</div>
+            ) : isAuthenticated ? (
+              <>
+                <div className="hidden md:flex items-center space-x-2 text-sm text-gray-700">
+                  <UserIcon className="h-4 w-4" />
+                  <span>Welcome, {(user as any)?.firstName || (user as any)?.email}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  data-testid="button-logout"
+                >
+                  <LogOutIcon className="h-4 w-4 mr-1" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Button onClick={handleLogin} data-testid="button-login">
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       </div>
