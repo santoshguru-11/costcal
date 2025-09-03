@@ -217,7 +217,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           microsoftOffice365: { enabled: false, licenses: 0 }
         },
         compute: analysis.costRequirements.compute,
-        storage: analysis.costRequirements.storage,
+        storage: {
+          ...analysis.costRequirements.storage,
+          fileStorage: { size: 0, performanceMode: 'general-purpose' as const }
+        },
         database: {
           ...analysis.costRequirements.database,
           nosql: { engine: 'none' as const, readCapacity: 0, writeCapacity: 0, storage: 0 },
@@ -226,56 +229,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         networking: {
           ...analysis.costRequirements.networking,
-          cdn: { enabled: false, requests: 0, dataTransfer: 0 }
-        },
-        ai: {
-          models: { enabled: false, requests: 0, modelType: 'small' as const },
-          mlPipelines: { enabled: false, pipelines: 0, computeHours: 0 },
-          dataProcessing: { enabled: false, dataVolume: 0 }
+          cdn: { enabled: false, requests: 0, dataTransfer: 0 },
+          dns: { hostedZones: 0, queries: 0 },
+          vpn: { connections: 0, hours: 0 }
         },
         analytics: {
-          dataLakes: { enabled: false, storage: 0, queries: 0 },
-          etl: { enabled: false, jobs: 0, dataVolume: 0 },
-          reporting: { enabled: false, reports: 0, users: 0 }
+          dataProcessing: { hours: 0, nodeType: 'small' as const },
+          streaming: { shards: 0, records: 0 },
+          businessIntelligence: { users: 0, queries: 0 }
+        },
+        ai: {
+          training: { hours: 0, instanceType: 'cpu' as const },
+          inference: { requests: 0, instanceType: 'cpu' as const },
+          prebuilt: { imageAnalysis: 0, textProcessing: 0, speechServices: 0 }
+        },
+        security: {
+          webFirewall: { enabled: false, requests: 0 },
+          identityManagement: { users: 0, authentications: 0 },
+          keyManagement: { keys: 0, operations: 0 },
+          threatDetection: { enabled: false, events: 0 }
         },
         monitoring: {
-          logs: { enabled: false, volume: 0, retention: 30 },
-          metrics: { enabled: false, dataPoints: 0 },
-          alerts: { enabled: false, rules: 0 }
+          metrics: 0,
+          logs: 0,
+          traces: 0,
+          alerts: 0
+        },
+        devops: {
+          cicd: { buildMinutes: 0, parallelJobs: 0 },
+          containerRegistry: { storage: 0, pulls: 0 },
+          apiManagement: { requests: 0, endpoints: 0 }
         },
         backup: {
+          storage: 0,
           frequency: 'daily' as const,
-          retention: { days: 30, weeks: 4, months: 12, years: 1 },
-          crossRegion: false,
-          dataVolume: 0
+          retention: 30
         },
-        disaster: {
-          enabled: false,
-          rto: 4,
-          rpo: 1,
-          multiRegion: false,
-          testing: 'quarterly' as const
+        iot: {
+          devices: 0,
+          messages: 0,
+          dataProcessing: 0,
+          edgeLocations: 0
         },
-        compliance: {
-          frameworks: [],
-          dataResidency: 'flexible' as const,
-          encryption: { atRest: true, inTransit: true },
-          auditing: false
+        media: {
+          videoStreaming: { hours: 0, quality: '1080p' as const },
+          transcoding: { minutes: 0, inputFormat: 'standard' as const }
         },
-        development: {
-          environments: { dev: true, staging: true, prod: true },
-          cicd: { enabled: false, builds: 0 },
-          testing: { automated: false, load: false }
+        quantum: {
+          processingUnits: 0,
+          quantumAlgorithms: 'optimization' as const,
+          circuitComplexity: 'basic' as const
+        },
+        advancedAI: {
+          vectorDatabase: { dimensions: 0, queries: 0 },
+          customChips: { tpuHours: 0, inferenceChips: 0 },
+          modelHosting: { models: 0, requests: 0 },
+          ragPipelines: { documents: 0, embeddings: 0 }
+        },
+        edge: {
+          edgeLocations: 0,
+          edgeCompute: 0,
+          fiveGNetworking: { networkSlices: 0, privateNetworks: 0 },
+          realTimeProcessing: 0
+        },
+        confidential: {
+          secureEnclaves: 0,
+          trustedExecution: 0,
+          privacyPreservingAnalytics: 0,
+          zeroTrustProcessing: 0
+        },
+        sustainability: {
+          carbonFootprintTracking: false,
+          renewableEnergyPreference: false,
+          greenCloudOptimization: false,
+          carbonOffsetCredits: 0
         },
         scenarios: {
-          traffic: {
-            baseline: { rps: 100, users: 1000, dataTransfer: 1000 },
-            peak: { rps: 500, users: 5000, dataTransfer: 5000, duration: 2 },
-            growth: { monthly: 10, annual: 100 }
-          },
-          availability: { sla: 99.9, downtime: 8.76 },
-          performance: { latency: 200, throughput: 1000 },
-          scaling: { auto: true, manual: false, predictive: false }
+          disasterRecovery: { enabled: false, rtoHours: 24, rpoMinutes: 240, backupRegions: 1 },
+          compliance: { frameworks: [], auditLogging: false, dataResidency: 'global' as const },
+          migration: { dataToMigrate: 0, applicationComplexity: 'moderate' as const }
+        },
+        optimization: {
+          reservedInstanceStrategy: 'moderate' as const,
+          spotInstanceTolerance: 10,
+          autoScalingAggression: 'moderate' as const,
+          costAlerts: { enabled: true, thresholdPercent: 20, notificationPreference: 'email' as const }
         }
       };
       
