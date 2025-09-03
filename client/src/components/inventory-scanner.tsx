@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { CloudCredential } from "./cloud-credentials-form";
+import CostResults from "./cost-results";
 
 interface UnifiedResource {
   id: string;
@@ -78,6 +79,7 @@ const getStateColor = (state: string) => {
 export function InventoryScanner({ credentials, onInventoryScanned }: InventoryScannerProps) {
   const [scanProgress, setScanProgress] = useState(0);
   const [currentProvider, setCurrentProvider] = useState<string>('');
+  const [automaticCostAnalysis, setAutomaticCostAnalysis] = useState<any>(null);
 
   const scanMutation = useMutation({
     mutationFn: async () => {
@@ -104,7 +106,7 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
 
       setTimeout(() => {
         setScanProgress(90);
-        setCurrentProvider('Finalizing scan...');
+        setCurrentProvider('Finalizing scan and calculating costs...');
       }, 3000);
 
       const response = await apiRequest('POST', '/api/inventory/scan', scanRequest);
@@ -117,10 +119,14 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
       setScanProgress(100);
       setCurrentProvider('Scan complete!');
       
-      return result.inventory;
+      return result;
     },
-    onSuccess: (inventory: UnifiedInventory) => {
-      onInventoryScanned(inventory);
+    onSuccess: (result: { inventory: UnifiedInventory; costAnalysis?: any }) => {
+      onInventoryScanned(result.inventory);
+      // If we got cost analysis automatically, set it
+      if (result.costAnalysis) {
+        setAutomaticCostAnalysis(result.costAnalysis);
+      }
       // Reset progress after 2 seconds
       setTimeout(() => {
         setScanProgress(0);
@@ -239,10 +245,11 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
 
           {scanMutation.isSuccess && scanMutation.data && (
             <InventoryResults 
-              inventory={scanMutation.data} 
+              inventory={scanMutation.data.inventory} 
               onGenerateCostAnalysis={(inventory) => generateCostAnalysisMutation.mutate(inventory)}
               costAnalysisLoading={generateCostAnalysisMutation.isPending}
               costAnalysisResult={generateCostAnalysisMutation.data}
+              automaticCostAnalysis={automaticCostAnalysis}
             />
           )}
         </CardContent>
@@ -256,13 +263,15 @@ interface InventoryResultsProps {
   onGenerateCostAnalysis: (inventory: UnifiedInventory) => void;
   costAnalysisLoading: boolean;
   costAnalysisResult?: any;
+  automaticCostAnalysis?: any;
 }
 
 function InventoryResults({ 
   inventory, 
   onGenerateCostAnalysis, 
   costAnalysisLoading, 
-  costAnalysisResult 
+  costAnalysisResult,
+  automaticCostAnalysis 
 }: InventoryResultsProps) {
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -431,28 +440,19 @@ function InventoryResults({
 
           <TabsContent value="analysis" className="mt-6">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Automated Cost Analysis</h3>
-                <Button
-                  onClick={() => onGenerateCostAnalysis(inventory)}
-                  disabled={costAnalysisLoading}
-                  data-testid="button-generate-cost-analysis"
-                >
-                  {costAnalysisLoading ? (
-                    <>
-                      <Clock className="h-4 w-4 mr-2 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Generate Cost Analysis
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              {costAnalysisResult ? (
+              {automaticCostAnalysis ? (
+                <div className="space-y-4">
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Cost analysis completed automatically! Here's your multi-cloud cost comparison based on your scanned resources.
+                    </AlertDescription>
+                  </Alert>
+                  
+                  {/* Display the full cost results */}
+                  <CostResults results={automaticCostAnalysis.results} analysisId={automaticCostAnalysis.analysisId} />
+                </div>
+              ) : costAnalysisResult ? (
                 <div className="space-y-4">
                   <Alert>
                     <CheckCircle className="h-4 w-4" />
@@ -497,12 +497,34 @@ function InventoryResults({
                   </Card>
                 </div>
               ) : (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Click "Generate Cost Analysis" to automatically convert your discovered resources into cost requirements for multi-cloud comparison.
-                  </AlertDescription>
-                </Alert>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Automated Cost Analysis</h3>
+                    <Button
+                      onClick={() => onGenerateCostAnalysis(inventory)}
+                      disabled={costAnalysisLoading}
+                      data-testid="button-generate-cost-analysis"
+                    >
+                      {costAnalysisLoading ? (
+                        <>
+                          <Clock className="h-4 w-4 mr-2 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <DollarSign className="h-4 w-4 mr-2" />
+                          Generate Cost Analysis
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Click "Generate Cost Analysis" to automatically convert your discovered resources into cost requirements for multi-cloud comparison.
+                    </AlertDescription>
+                  </Alert>
+                </div>
               )}
             </div>
           </TabsContent>
