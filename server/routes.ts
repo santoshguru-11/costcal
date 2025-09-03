@@ -170,11 +170,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         scanDuration
       }, userId);
+
+      // Automatically generate multi-cloud cost analysis
+      let costAnalysis = null;
+      try {
+        const analysis = await inventoryService.generateAutomaticCostAnalysis(inventory);
+        
+        // Convert inventory mapping to full requirements format
+        const fullRequirements = {
+          currency: 'USD' as const,
+          licensing: {
+            windows: { enabled: false, licenses: 0 },
+            sqlServer: { enabled: false, edition: 'standard' as const, licenses: 0 },
+            oracle: { enabled: false, edition: 'standard' as const, licenses: 0 },
+            vmware: { enabled: false, licenses: 0 },
+            redhat: { enabled: false, licenses: 0 },
+            sap: { enabled: false, licenses: 0 },
+            microsoftOffice365: { enabled: false, licenses: 0 }
+          },
+          compute: analysis.costRequirements.compute,
+          storage: {
+            ...analysis.costRequirements.storage,
+            fileStorage: { size: 0, performanceMode: 'general-purpose' as const }
+          },
+          database: {
+            ...analysis.costRequirements.database,
+            nosql: { engine: 'none' as const, readCapacity: 0, writeCapacity: 0, storage: 0 },
+            cache: { engine: 'none' as const, instanceClass: 'small' as const, nodes: 0 },
+            dataWarehouse: { nodes: 0, nodeType: 'small' as const, storage: 0 }
+          },
+          networking: {
+            ...analysis.costRequirements.networking,
+            cdn: { enabled: false, requests: 0, dataTransfer: 0 },
+            dns: { hostedZones: 0, queries: 0 },
+            vpn: { connections: 0, hours: 0 }
+          },
+          analytics: {
+            dataProcessing: { hours: 0, nodeType: 'small' as const },
+            streaming: { shards: 0, records: 0 },
+            businessIntelligence: { users: 0, queries: 0 }
+          },
+          ai: {
+            training: { hours: 0, instanceType: 'cpu' as const },
+            inference: { requests: 0, instanceType: 'cpu' as const },
+            prebuilt: { imageAnalysis: 0, textProcessing: 0, speechServices: 0 }
+          },
+          security: {
+            webFirewall: { enabled: false, requests: 0 },
+            identityManagement: { users: 0, authentications: 0 },
+            keyManagement: { keys: 0, operations: 0 },
+            threatDetection: { enabled: false, events: 0 }
+          },
+          monitoring: {
+            metrics: 0,
+            logs: 0,
+            traces: 0,
+            alerts: 0
+          },
+          devops: {
+            cicd: { buildMinutes: 0, parallelJobs: 0 },
+            containerRegistry: { storage: 0, pulls: 0 },
+            apiManagement: { requests: 0, endpoints: 0 }
+          },
+          backup: {
+            storage: 0,
+            frequency: 'daily' as const,
+            retention: 30
+          },
+          iot: {
+            devices: 0,
+            messages: 0,
+            dataProcessing: 0,
+            edgeLocations: 0
+          },
+          media: {
+            videoStreaming: { hours: 0, quality: '1080p' as const },
+            transcoding: { minutes: 0, inputFormat: 'standard' as const }
+          },
+          quantum: {
+            processingUnits: 0,
+            quantumAlgorithms: 'optimization' as const,
+            circuitComplexity: 'basic' as const
+          },
+          advancedAI: {
+            vectorDatabase: { dimensions: 0, queries: 0 },
+            customChips: { tpuHours: 0, inferenceChips: 0 },
+            modelHosting: { models: 0, requests: 0 },
+            ragPipelines: { documents: 0, embeddings: 0 }
+          },
+          edge: {
+            edgeLocations: 0,
+            edgeCompute: 0,
+            fiveGNetworking: { networkSlices: 0, privateNetworks: 0 },
+            realTimeProcessing: 0
+          },
+          confidential: {
+            secureEnclaves: 0,
+            trustedExecution: 0,
+            privacyPreservingAnalytics: 0,
+            zeroTrustProcessing: 0
+          },
+          sustainability: {
+            carbonFootprintTracking: false,
+            renewableEnergyPreference: false,
+            greenCloudOptimization: false,
+            carbonOffsetCredits: 0
+          },
+          scenarios: {
+            disasterRecovery: { enabled: false, rtoHours: 24, rpoMinutes: 240, backupRegions: 1 },
+            compliance: { frameworks: [], auditLogging: false, dataResidency: 'global' as const },
+            migration: { dataToMigrate: 0, applicationComplexity: 'moderate' as const }
+          },
+          optimization: {
+            reservedInstanceStrategy: 'moderate' as const,
+            spotInstanceTolerance: 10,
+            autoScalingAggression: 'moderate' as const,
+            costAlerts: { enabled: true, thresholdPercent: 20, notificationPreference: 'email' as const }
+          }
+        };
+        
+        // Calculate costs using the full requirements
+        const costResults = costCalculator.calculateCosts(fullRequirements);
+        
+        // Create cost analysis with inventory link
+        const savedCostAnalysis = await storage.createCostAnalysis({
+          requirements: analysis.costRequirements,
+          results: costResults,
+          inventoryScanId: inventoryScan.id
+        }, userId);
+        
+        costAnalysis = {
+          analysisId: savedCostAnalysis.id,
+          inventory: analysis.inventory,
+          costRequirements: analysis.costRequirements,
+          results: costResults,
+          recommendations: analysis.recommendations
+        };
+      } catch (error) {
+        console.error("Auto cost analysis error:", error);
+        // Don't fail the scan if cost analysis fails
+      }
       
       res.json({
         success: true,
         inventory,
-        scanId: inventoryScan.id
+        scanId: inventoryScan.id,
+        costAnalysis: costAnalysis
       });
     } catch (error) {
       console.error("Inventory scan error:", error);
