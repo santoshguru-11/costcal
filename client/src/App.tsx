@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/navbar";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
 import Home from "@/pages/home";
 import Calculator from "@/pages/calculator";
 import Results from "@/pages/results";
@@ -20,6 +21,7 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/login" component={Login} />
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (

@@ -3,10 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { CalculatorIcon, CloudIcon, ShieldCheckIcon, TrendingUpIcon } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { useLocation } from "wouter";
 
 export default function Landing() {
+  const [, setLocation] = useLocation();
+  
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    setLocation("/login");
   };
 
   return (

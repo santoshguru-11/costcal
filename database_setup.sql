@@ -2,10 +2,10 @@
 -- PostgreSQL DDL Script for complete database schema
 
 -- Create database (run this separately if needed)
--- CREATE DATABASE cloud_cost_optimizer;
+CREATE DATABASE cloud_cost_optimizer;
 
 -- Connect to the database
--- \c cloud_cost_optimizer;
+\c cloud_cost_optimizer;
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

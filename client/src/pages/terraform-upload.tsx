@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { UploadIcon, FileIcon, CheckCircleIcon } from "lucide-react";
+import { UploadIcon, FileIcon, CheckCircleIcon, Server, Database, HardDrive, Network, Shield, Monitor } from "lucide-react";
 import { useLocation } from "wouter";
 import { Helmet } from "react-helmet-async";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 export default function TerraformUpload() {
   const { toast } = useToast();
@@ -17,12 +19,51 @@ export default function TerraformUpload() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadResult, setUploadResult] = useState<any>(null);
 
+  const getServiceIcon = (service: string) => {
+    switch (service.toLowerCase()) {
+      case 'compute':
+        return <Server className="h-4 w-4" />;
+      case 'database':
+        return <Database className="h-4 w-4" />;
+      case 'storage':
+        return <HardDrive className="h-4 w-4" />;
+      case 'networking':
+        return <Network className="h-4 w-4" />;
+      case 'monitoring':
+        return <Monitor className="h-4 w-4" />;
+      default:
+        return <Shield className="h-4 w-4" />;
+    }
+  };
+
+  const getStateBadgeClass = (state: string) => {
+    switch (state.toLowerCase()) {
+      case 'active':
+      case 'running':
+        return 'bg-green-100 text-green-800';
+      case 'stopped':
+      case 'stopping':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+      case 'starting':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const analyzeMutation = useMutation({
-    mutationFn: async (terraformState: any) => {
-      return await apiRequest("/api/inventory/analyze-costs", "POST", {
-        inventory: terraformState.inventory,
-        scanId: terraformState.scanId
-      });
+    mutationFn: async (uploadResult: any) => {
+      if (uploadResult.costAnalysis) {
+        // Cost analysis already generated, navigate to results
+        return { analysis: { analysisId: uploadResult.costAnalysis.analysisId } };
+      } else {
+        // Generate cost analysis from inventory
+        return await apiRequest("POST", "/api/inventory/analyze-costs", {
+          inventory: uploadResult.inventory,
+          scanId: uploadResult.scanId
+        });
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/analyses"] });
@@ -96,141 +137,36 @@ export default function TerraformUpload() {
       const fileContent = await selectedFile.text();
       const terraformState = JSON.parse(fileContent);
       
-      // Convert Terraform state to inventory format
-      const inventory = parseTerraformState(terraformState);
-      
-      // Create a simulated scan result
-      const mockScanResult = {
-        scanId: `terraform-${Date.now()}`,
-        inventory
-      };
-      
-      setUploadResult(mockScanResult);
-      
-      toast({
-        title: "File Parsed",
-        description: `Found ${inventory.resources?.length || 0} resources in Terraform state`,
+      // Send to server for parsing and analysis
+      const response = await apiRequest("POST", "/api/terraform/parse", {
+        terraformState
       });
+      const result = await response.json();
+      
+      if (result.success) {
+        setUploadResult({
+          scanId: result.scanId,
+          inventory: result.inventory,
+          costAnalysis: result.costAnalysis
+        });
+        
+        toast({
+          title: "Terraform State Parsed",
+          description: `Found ${result.inventory.resources?.length || 0} resources and generated cost analysis`,
+        });
+      } else {
+        throw new Error(result.message || "Failed to parse Terraform state");
+      }
     } catch (error) {
+      console.error("Terraform parsing error:", error);
       toast({
         title: "Parse Error",
-        description: "Failed to parse Terraform state file. Please check the file format.",
+        description: error instanceof Error ? error.message : "Failed to parse Terraform state file. Please check the file format.",
         variant: "destructive",
       });
     }
   };
 
-  const parseTerraformState = (tfState: any) => {
-    const resources: any[] = [];
-    
-    if (tfState.resources) {
-      tfState.resources.forEach((resource: any) => {
-        if (resource.instances) {
-          resource.instances.forEach((instance: any) => {
-            const attributes = instance.attributes || {};
-            
-            // Map Terraform resources to unified format
-            const unifiedResource = {
-              id: attributes.id || resource.name,
-              name: attributes.name || resource.name,
-              type: mapTerraformType(resource.type),
-              service: mapTerraformService(resource.type),
-              region: attributes.region || attributes.availability_zone || 'unknown',
-              provider: mapTerraformProvider(resource.provider),
-              status: 'active',
-              costDetails: extractCostDetails(resource.type, attributes),
-              tags: attributes.tags || {},
-              metadata: {
-                terraformType: resource.type,
-                terraformAddress: resource.address || `${resource.type}.${resource.name}`
-              }
-            };
-            
-            resources.push(unifiedResource);
-          });
-        }
-      });
-    }
-    
-    return {
-      resources,
-      summary: {
-        totalResources: resources.length,
-        providers: Array.from(new Set(resources.map(r => r.provider))),
-        services: Array.from(new Set(resources.map(r => r.service))),
-        regions: Array.from(new Set(resources.map(r => r.region)))
-      },
-      scanTime: new Date().toISOString(),
-      source: 'terraform'
-    };
-  };
-
-  const mapTerraformType = (tfType: string) => {
-    const typeMap: Record<string, string> = {
-      'aws_instance': 'Instance',
-      'aws_s3_bucket': 'Bucket',
-      'aws_rds_instance': 'Database',
-      'aws_lb': 'LoadBalancer',
-      'aws_ebs_volume': 'Volume',
-      'azurerm_virtual_machine': 'Instance',
-      'azurerm_storage_account': 'StorageAccount',
-      'azurerm_sql_database': 'Database',
-      'google_compute_instance': 'Instance',
-      'google_storage_bucket': 'Bucket',
-      'google_sql_database_instance': 'Database'
-    };
-    return typeMap[tfType] || 'Unknown';
-  };
-
-  const mapTerraformService = (tfType: string) => {
-    if (tfType.includes('instance') || tfType.includes('vm')) return 'Compute';
-    if (tfType.includes('s3') || tfType.includes('storage')) return 'Storage';
-    if (tfType.includes('rds') || tfType.includes('sql')) return 'Database';
-    if (tfType.includes('lb') || tfType.includes('load')) return 'LoadBalancer';
-    return 'Other';
-  };
-
-  const mapTerraformProvider = (provider: string) => {
-    if (provider?.includes('aws')) return 'aws';
-    if (provider?.includes('azurerm')) return 'azure';
-    if (provider?.includes('google')) return 'gcp';
-    return 'unknown';
-  };
-
-  const extractCostDetails = (tfType: string, attributes: any) => {
-    const details: any = {};
-    
-    if (tfType.includes('instance')) {
-      details.vcpus = getInstanceVCPUs(attributes.instance_type);
-      details.memory = getInstanceMemory(attributes.instance_type);
-      details.instanceType = attributes.instance_type;
-    }
-    
-    if (tfType.includes('storage') || tfType.includes('ebs')) {
-      details.storage = attributes.size || attributes.allocated_storage || 0;
-      details.storageType = attributes.type || attributes.storage_type;
-    }
-    
-    return details;
-  };
-
-  const getInstanceVCPUs = (instanceType: string) => {
-    const vcpuMap: Record<string, number> = {
-      't2.micro': 1, 't2.small': 1, 't2.medium': 2, 't2.large': 2,
-      'm5.large': 2, 'm5.xlarge': 4, 'm5.2xlarge': 8,
-      'Standard_B1s': 1, 'Standard_B2s': 2, 'Standard_D2s_v3': 2
-    };
-    return vcpuMap[instanceType] || 2;
-  };
-
-  const getInstanceMemory = (instanceType: string) => {
-    const memoryMap: Record<string, number> = {
-      't2.micro': 1, 't2.small': 2, 't2.medium': 4, 't2.large': 8,
-      'm5.large': 8, 'm5.xlarge': 16, 'm5.2xlarge': 32,
-      'Standard_B1s': 1, 'Standard_B2s': 4, 'Standard_D2s_v3': 8
-    };
-    return memoryMap[instanceType] || 4;
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -356,11 +292,64 @@ export default function TerraformUpload() {
                 </div>
               </div>
 
+              {/* Resources Table */}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-4">Discovered Resources</h3>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Service</TableHead>
+                        <TableHead>Provider</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>State</TableHead>
+                        <TableHead>Specs</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {uploadResult.inventory.resources.slice(0, 50).map((resource: any) => (
+                        <TableRow key={resource.id}>
+                          <TableCell className="font-medium">{resource.name}</TableCell>
+                          <TableCell>{resource.type}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getServiceIcon(resource.service)}
+                              {resource.service}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {resource.provider}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">{resource.location}</TableCell>
+                          <TableCell>
+                            <Badge className={getStateBadgeClass(resource.state)}>
+                              {resource.state}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {resource.costDetails?.instanceType || resource.costDetails?.size || '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {uploadResult.inventory.resources.length > 50 && (
+                  <p className="text-sm text-muted-foreground mt-4">
+                    Showing first 50 resources of {uploadResult.inventory.resources.length} total resources.
+                  </p>
+                )}
+              </div>
+
               <Button
                 onClick={() => analyzeMutation.mutate(uploadResult)}
                 disabled={analyzeMutation.isPending}
                 size="lg"
-                className="w-full"
+                className="w-full mt-6"
                 data-testid="button-analyze-costs"
               >
                 {analyzeMutation.isPending ? "Analyzing Costs..." : "Analyze Costs"}

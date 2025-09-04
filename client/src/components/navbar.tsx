@@ -4,15 +4,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { UserIcon, LogOutIcon } from "lucide-react";
 
 export default function Navbar() {
-  const [location] = useLocation();
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
+  const { isAuthenticated, user, isLoading, logout } = useAuth();
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/");
   };
 
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    setLocation("/login");
   };
 
   const navItems = isAuthenticated ? [

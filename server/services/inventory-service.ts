@@ -1,6 +1,7 @@
 import { AWSInventoryService, AWSCredentials, AWSInventory } from './aws-inventory.js';
 import { AzureInventoryService, AzureCredentials, AzureInventory } from './azure-inventory.js';
 import { GCPInventoryService, GCPCredentials, GCPInventory } from './gcp-inventory.js';
+import { OCIInventoryService } from './oci-inventory.js';
 
 export interface OCICredentials {
   tenancyId: string;
@@ -11,8 +12,29 @@ export interface OCICredentials {
 }
 
 export interface OCIInventory {
-  resources: any[];
-  summary: any;
+  resources: OCIResource[];
+  summary: {
+    totalResources: number;
+    byService: Record<string, number>;
+    byRegion: Record<string, number>;
+    byState: Record<string, number>;
+  };
+  metadata: {
+    scanTime: string;
+    region: string;
+    provider: string;
+  };
+}
+
+export interface OCIResource {
+  id: string;
+  name: string;
+  type: string;
+  service: string;
+  region: string;
+  state: string;
+  compartmentName: string;
+  costDetails: any;
 }
 
 export interface CloudCredentials {
@@ -166,42 +188,8 @@ export class CloudInventoryService {
         return await gcpService.discoverResources();
       
       case 'oci':
-        // For now, return mock data for OCI (same pattern as other providers)
-        return {
-          resources: [
-            {
-              id: 'oci-compute-1',
-              name: 'Oracle Compute Instance',
-              type: 'Virtual Machine',
-              service: 'OCI Compute',
-              region: (cloudCredentials.credentials as OCICredentials).region,
-              state: 'running',
-              costDetails: {
-                instanceType: 'VM.Standard2.1',
-                vcpus: 1,
-                memory: 15,
-                storage: 47
-              }
-            },
-            {
-              id: 'oci-db-1',
-              name: 'Oracle Autonomous Database',
-              type: 'Autonomous Database',
-              service: 'OCI Database',
-              region: (cloudCredentials.credentials as OCICredentials).region,
-              state: 'available',
-              costDetails: {
-                storage: 20
-              }
-            }
-          ],
-          summary: {
-            totalResources: 2,
-            compute: { instances: 1, totalVCpus: 1, totalMemory: 15 },
-            storage: { totalSize: 67 },
-            database: { instances: 1, totalStorage: 20 }
-          }
-        };
+        const ociService = new OCIInventoryService(cloudCredentials.credentials as OCICredentials);
+        return await ociService.discoverResources();
       
       default:
         throw new Error(`Unsupported provider: ${cloudCredentials.provider}`);

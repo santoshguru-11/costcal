@@ -7,6 +7,8 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { 
   Search, 
   Server, 
@@ -33,6 +35,7 @@ interface UnifiedResource {
   location: string;
   tags?: Record<string, string>;
   state: string;
+  compartmentName?: string; // For OCI resources
   costDetails?: {
     instanceType?: string;
     size?: string;
@@ -274,6 +277,22 @@ function InventoryResults({
   automaticCostAnalysis 
 }: InventoryResultsProps) {
   const [activeTab, setActiveTab] = useState('overview');
+  const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [searchFilter, setSearchFilter] = useState<string>("");
+
+  // Filter resources based on service and search
+  const filteredResources = inventory?.resources.filter(resource => {
+    const matchesService = serviceFilter === "all" || resource.service === serviceFilter;
+    const matchesSearch = searchFilter === "" || 
+      resource.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      resource.type.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      resource.service.toLowerCase().includes(searchFilter.toLowerCase());
+    return matchesService && matchesSearch;
+  }) || [];
+
+  // Get unique services for filter dropdown
+  const availableServices = inventory ? 
+    Array.from(new Set(inventory.resources.map(r => r.service))).sort() : [];
 
   return (
     <Card className="mt-6">
@@ -381,6 +400,39 @@ function InventoryResults({
           </TabsContent>
 
           <TabsContent value="resources" className="mt-6">
+            {/* Filter Controls */}
+            <div className="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex-1 min-w-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search resources by name, type, or service..."
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 items-center">
+                <Select value={serviceFilter} onValueChange={setServiceFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by service" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Services</SelectItem>
+                    {availableServices.map(service => (
+                      <SelectItem key={service} value={service}>
+                        {service}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Badge variant="secondary" className="ml-2">
+                  {filteredResources.length} of {inventory?.resources.length || 0} resources
+                </Badge>
+              </div>
+            </div>
+
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -390,12 +442,13 @@ function InventoryResults({
                     <TableHead>Service</TableHead>
                     <TableHead>Provider</TableHead>
                     <TableHead>Location</TableHead>
+                    <TableHead>Compartment</TableHead>
                     <TableHead>State</TableHead>
                     <TableHead>Specs</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {inventory.resources.slice(0, 50).map((resource) => (
+                  {filteredResources.slice(0, 100).map((resource) => (
                     <TableRow key={resource.id}>
                       <TableCell className="font-medium">{resource.name}</TableCell>
                       <TableCell>{resource.type}</TableCell>
@@ -411,6 +464,9 @@ function InventoryResults({
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm">{resource.location}</TableCell>
+                      <TableCell className="text-sm">
+                        {resource.compartmentName || '-'}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className={`w-2 h-2 rounded-full ${getStateColor(resource.state)}`} />
@@ -431,9 +487,14 @@ function InventoryResults({
                 </TableBody>
               </Table>
             </div>
-            {inventory.resources.length > 50 && (
+            {filteredResources.length > 100 && (
               <p className="text-sm text-muted-foreground mt-4">
-                Showing first 50 resources of {inventory.resources.length} total.
+                Showing first 100 resources of {filteredResources.length} filtered results.
+              </p>
+            )}
+            {filteredResources.length === 0 && inventory && inventory.resources.length > 0 && (
+              <p className="text-sm text-muted-foreground mt-4 text-center py-8">
+                No resources match your current filters. Try adjusting your search or service filter.
               </p>
             )}
           </TabsContent>

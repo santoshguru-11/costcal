@@ -1,0 +1,594 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudCostOptimizer - Multi-Cloud Cost Analysis Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#2563EB',
+                        secondary: '#64748B',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="bg-slate-50 font-inter">
+    <!-- @COMPONENT: Header -->
+    <header class="bg-white shadow-sm border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-slate-900">CloudCostOptimizer</h1>
+                    </div>
+                </div>
+                <nav class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#" class="text-slate-900 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                        <a href="#" class="text-slate-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">History</a>
+                        <a href="#" class="text-slate-600 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">Settings</a>
+                    </div>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                        Sign In
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <!-- @COMPONENT: HeroSection -->
+    <section class="bg-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl font-bold text-slate-900 sm:text-5xl">
+                Optimize Your Cloud Costs
+                <span class="text-primary">Across All Providers</span>
+            </h1>
+            <p class="mt-6 text-xl text-slate-600 max-w-3xl mx-auto">
+                Get instant cost comparisons across AWS, Azure, GCP, and Oracle Cloud. 
+                Find the best pricing for your infrastructure requirements with our advanced optimization engine.
+            </p>
+            <div class="mt-10 flex justify-center">
+                <button onclick="showCalculator()" class="bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg">
+                    Start Cost Analysis
+                </button>
+            </div>
+            <div class="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-primary">4</div>
+                    <div class="text-sm text-slate-600">Cloud Providers</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-primary">99.9%</div>
+                    <div class="text-sm text-slate-600">Accuracy Rate</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-primary">30%</div>
+                    <div class="text-sm text-slate-600">Avg. Savings</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-primary">1000+</div>
+                    <div class="text-sm text-slate-600">Companies Trust Us</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: HeroSection -->
+
+    <!-- @COMPONENT: CalculatorForm -->
+    <section id="calculator" class="py-16 bg-slate-50" style="display: none;">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-900">Cloud Infrastructure Requirements</h2>
+                    <p class="text-slate-600 mt-2">Enter your infrastructure requirements to get cost estimates across all major cloud providers.</p>
+                </div>
+
+                <!-- Progress Steps -->
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center">
+                        <div class="flex items-center text-primary">
+                            <div class="flex items-center justify-center w-8 h-8 bg-primary text-white rounded-full text-sm font-medium">1</div>
+                            <span class="ml-2 text-sm font-medium">Compute</span>
+                        </div>
+                        <div class="w-16 h-0.5 bg-slate-200 mx-4"></div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="flex items-center text-slate-400">
+                            <div class="flex items-center justify-center w-8 h-8 bg-slate-200 text-slate-600 rounded-full text-sm font-medium">2</div>
+                            <span class="ml-2 text-sm font-medium">Storage</span>
+                        </div>
+                        <div class="w-16 h-0.5 bg-slate-200 mx-4"></div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="flex items-center text-slate-400">
+                            <div class="flex items-center justify-center w-8 h-8 bg-slate-200 text-slate-600 rounded-full text-sm font-medium">3</div>
+                            <span class="ml-2 text-sm font-medium">Database</span>
+                        </div>
+                        <div class="w-16 h-0.5 bg-slate-200 mx-4"></div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="flex items-center text-slate-400">
+                            <div class="flex items-center justify-center w-8 h-8 bg-slate-200 text-slate-600 rounded-full text-sm font-medium">4</div>
+                            <span class="ml-2 text-sm font-medium">Network</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Content -->
+                <form id="costCalculatorForm">
+                    <!-- Compute Section -->
+                    <div id="compute-step" class="space-y-6">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-4">Compute Requirements</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">vCPUs</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>2 vCPUs</option>
+                                    <option>4 vCPUs</option>
+                                    <option>8 vCPUs</option>
+                                    <option>16 vCPUs</option>
+                                    <option>32 vCPUs</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">RAM (GB)</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>4 GB</option>
+                                    <option>8 GB</option>
+                                    <option>16 GB</option>
+                                    <option>32 GB</option>
+                                    <option>64 GB</option>
+                                    <option>128 GB</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Instance Type</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>General Purpose</option>
+                                    <option>Compute Optimized</option>
+                                    <option>Memory Optimized</option>
+                                    <option>Storage Optimized</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Region</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>US East (N. Virginia)</option>
+                                    <option>US West (Oregon)</option>
+                                    <option>Europe (Ireland)</option>
+                                    <option>Asia Pacific (Singapore)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Storage Section -->
+                    <div id="storage-step" class="space-y-6 mt-8">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-4">Storage Requirements</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Storage Size (GB)</label>
+                                <input type="number" placeholder="500" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Storage Type</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>SSD (gp3)</option>
+                                    <option>SSD (io2)</option>
+                                    <option>HDD (st1)</option>
+                                    <option>Cold Storage</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Database Section -->
+                    <div id="database-step" class="space-y-6 mt-8">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-4">Database Requirements</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Database Engine</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>MySQL</option>
+                                    <option>PostgreSQL</option>
+                                    <option>MongoDB</option>
+                                    <option>Redis</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Database Size (GB)</label>
+                                <input type="number" placeholder="100" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Networking Section -->
+                    <div id="networking-step" class="space-y-6 mt-8">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-4">Networking Requirements</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Bandwidth (GB/month)</label>
+                                <input type="number" placeholder="1000" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Load Balancer</label>
+                                <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>None</option>
+                                    <option>Application Load Balancer</option>
+                                    <option>Network Load Balancer</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex justify-between">
+                        <button type="button" class="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+                            Save Draft
+                        </button>
+                        <button type="button" onclick="calculateCosts()" class="bg-primary text-white px-8 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            Calculate Costs
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: CalculatorForm -->
+
+    <!-- @COMPONENT: ResultsDashboard -->
+    <section id="results" class="py-16 bg-slate-50" style="display: none;">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-slate-900">Cost Analysis Results</h2>
+                <p class="text-slate-600 mt-2">Comprehensive cost breakdown across all cloud providers with optimization recommendations.</p>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-600">Cheapest Option</p>
+                            <p class="text-2xl font-bold text-success">$847/mo</p>
+                            <p class="text-sm text-slate-500">Oracle Cloud</p>
+                        </div>
+                        <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
+                            <span class="text-success font-bold">🏆</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-600">Most Expensive</p>
+                            <p class="text-2xl font-bold text-red-600">$1,247/mo</p>
+                            <p class="text-sm text-slate-500">AWS</p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
+                            <span class="text-red-600 font-bold">📈</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-600">Potential Savings</p>
+                            <p class="text-2xl font-bold text-primary">$400/mo</p>
+                            <p class="text-sm text-slate-500">32% reduction</p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <span class="text-primary font-bold">💰</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-600">Multi-Cloud Option</p>
+                            <p class="text-2xl font-bold text-warning">$783/mo</p>
+                            <p class="text-sm text-slate-500">Best hybrid</p>
+                        </div>
+                        <div class="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+                            <span class="text-warning font-bold">🔗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts and Tables Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Cost Comparison Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-4">Monthly Cost Comparison</h3>
+                    <canvas id="costChart" width="400" height="300"></canvas>
+                </div>
+
+                <!-- Service Breakdown Chart -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-4">Service Cost Breakdown</h3>
+                    <canvas id="breakdownChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Comparison Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-900">Detailed Cost Breakdown</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Service</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">AWS</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Azure</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">GCP</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Oracle Cloud</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Compute (8 vCPUs, 16GB)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$387/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$342/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$298/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-success font-semibold">$267/mo</td>
+                            </tr>
+                            <tr class="bg-slate-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Storage (500GB SSD)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$125/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$118/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-success font-semibold">$89/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$95/mo</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Database (100GB MySQL)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$287/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$245/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$198/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-success font-semibold">$156/mo</td>
+                            </tr>
+                            <tr class="bg-slate-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">Networking (1TB/mo)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$448/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$387/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-success font-semibold">$234/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$329/mo</td>
+                            </tr>
+                            <tr class="bg-primary/5 font-semibold">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">Total Monthly Cost</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$1,247/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$1,092/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">$819/mo</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-success font-bold">$847/mo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-4">💡 Single-Cloud Recommendation</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-2 h-2 bg-success rounded-full mt-2"></div>
+                            <div>
+                                <p class="font-medium text-slate-900">Oracle Cloud Infrastructure</p>
+                                <p class="text-sm text-slate-600">Best overall value at $847/month with competitive pricing across all services</p>
+                            </div>
+                        </div>
+                        <div class="bg-success/10 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-success">32% savings compared to AWS</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-900 mb-4">🔗 Multi-Cloud Optimization</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-2 h-2 bg-warning rounded-full mt-2"></div>
+                            <div>
+                                <p class="font-medium text-slate-900">Hybrid Approach: $783/month</p>
+                                <p class="text-sm text-slate-600">
+                                    • Compute & Database: Oracle Cloud<br>
+                                    • Storage: GCP<br>
+                                    • Networking: GCP
+                                </p>
+                            </div>
+                        </div>
+                        <div class="bg-warning/10 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-warning">Additional 7% savings with multi-cloud setup</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Actions -->
+            <div class="mt-8 flex justify-center space-x-4">
+                <button class="bg-white border border-slate-300 text-slate-700 px-6 py-2 rounded-lg hover:bg-slate-50 transition-colors font-medium">
+                    Export to CSV
+                </button>
+                <button class="bg-white border border-slate-300 text-slate-700 px-6 py-2 rounded-lg hover:bg-slate-50 transition-colors font-medium">
+                    Generate PDF Report
+                </button>
+                <button class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    Save Analysis
+                </button>
+            </div>
+        </div>
+    </section>
+    <!-- @END_COMPONENT: ResultsDashboard -->
+
+    <!-- @COMPONENT: Footer -->
+    <footer class="bg-white border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-slate-900">CloudCostOptimizer</h3>
+                    <p class="text-sm text-slate-600">The most accurate multi-cloud cost optimization platform for enterprises.</p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-slate-900 mb-4">Product</h4>
+                    <ul class="space-y-2 text-sm text-slate-600">
+                        <li><a href="#" class="hover:text-primary">Features</a></li>
+                        <li><a href="#" class="hover:text-primary">Pricing</a></li>
+                        <li><a href="#" class="hover:text-primary">API</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-slate-900 mb-4">Company</h4>
+                    <ul class="space-y-2 text-sm text-slate-600">
+                        <li><a href="#" class="hover:text-primary">About</a></li>
+                        <li><a href="#" class="hover:text-primary">Blog</a></li>
+                        <li><a href="#" class="hover:text-primary">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-slate-900 mb-4">Support</h4>
+                    <ul class="space-y-2 text-sm text-slate-600">
+                        <li><a href="#" class="hover:text-primary">Help Center</a></li>
+                        <li><a href="#" class="hover:text-primary">Documentation</a></li>
+                        <li><a href="#" class="hover:text-primary">Status</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-200 mt-8 pt-8 text-center text-sm text-slate-600">
+                <p>&copy; 2024 CloudCostOptimizer. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <!-- @END_COMPONENT: Footer -->
+
+    <script>
+        (function() {
+            // TODO: Implement actual form validation and API integration
+            
+            function showCalculator() {
+                document.getElementById('calculator').style.display = 'block';
+                document.getElementById('calculator').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            function calculateCosts() {
+                // TODO: Implement actual cost calculation logic and API calls
+                // Show loading state
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Calculating...';
+                button.disabled = true;
+
+                // Simulate API call
+                setTimeout(() => {
+                    document.getElementById('results').style.display = 'block';
+                    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Initialize charts
+                    initCharts();
+                    
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 2000);
+            }
+
+            function initCharts() {
+                // Cost Comparison Chart
+                const costCtx = document.getElementById('costChart').getContext('2d');
+                new Chart(costCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['AWS', 'Azure', 'GCP', 'Oracle Cloud'],
+                        datasets: [{
+                            label: 'Monthly Cost ($)',
+                            data: [1247, 1092, 819, 847],
+                            backgroundColor: [
+                                '#FF9F43',
+                                '#0078D4', 
+                                '#4285F4',
+                                '#F80000'
+                            ],
+                            borderColor: [
+                                '#FF7F00',
+                                '#106EBE',
+                                '#1E6DE5',
+                                '#C80000'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value;
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+
+                // Service Breakdown Chart (for Oracle Cloud - cheapest option)
+                const breakdownCtx = document.getElementById('breakdownChart').getContext('2d');
+                new Chart(breakdownCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Compute', 'Storage', 'Database', 'Networking'],
+                        datasets: [{
+                            data: [267, 95, 156, 329],
+                            backgroundColor: [
+                                '#2563EB',
+                                '#10B981',
+                                '#F59E0B',
+                                '#EF4444'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#FFFFFF'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Make functions globally available
+            window.showCalculator = showCalculator;
+            window.calculateCosts = calculateCosts;
+        })();
+    </script>
+</body>
+</html>

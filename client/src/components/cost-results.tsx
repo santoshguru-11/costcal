@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CloudProvider, CostCalculationResult } from "@shared/schema";
 import CostCharts from "./cost-charts";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface CostResultsProps {
   results: CostCalculationResult;
@@ -14,8 +16,58 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
     window.open(`/api/export/${analysisId}/csv`, '_blank');
   };
 
+  const handleGeneratePDF = async () => {
+    try {
+      // Get the main content element
+      const element = document.getElementById('cost-results-content');
+      if (!element) {
+        console.error('Content element not found');
+        return;
+      }
+
+      // Create canvas from HTML content
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Calculate dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Save the PDF
+      const fileName = `cost-analysis-${analysisId}-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="cost-results-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-slate-900">Cost Analysis Results</h2>
         <p className="text-slate-600 mt-2">
@@ -379,7 +431,7 @@ export default function CostResults({ results, analysisId }: CostResultsProps) {
         <Button variant="outline" onClick={handleExportCSV}>
           Export to CSV
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleGeneratePDF}>
           Generate PDF Report
         </Button>
         <Button className="bg-primary hover:bg-blue-700">
