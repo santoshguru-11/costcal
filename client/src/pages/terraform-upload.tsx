@@ -52,6 +52,52 @@ export default function TerraformUpload() {
     }
   };
 
+  const getResourceSpecs = (costDetails: any) => {
+    if (!costDetails) return '-';
+    
+    const specs = [];
+    
+    // CPU and Memory
+    if (costDetails.vcpus && costDetails.memory) {
+      specs.push(`${costDetails.vcpus} vCPU, ${costDetails.memory}GB RAM`);
+    }
+    
+    // Storage
+    if (costDetails.storage) {
+      const storageSize = costDetails.storage > 1024 ? 
+        `${(costDetails.storage / 1024).toFixed(1)}TB` : 
+        `${costDetails.storage}GB`;
+      specs.push(`${storageSize} ${costDetails.storageType || 'storage'}`);
+    }
+    
+    // Database specific
+    if (costDetails.engine) {
+      specs.push(`${costDetails.engine} ${costDetails.engineVersion || ''}`);
+    }
+    
+    // IOPS
+    if (costDetails.iops) {
+      specs.push(`${costDetails.iops} IOPS`);
+    }
+    
+    // Network
+    if (costDetails.cidrBlock) {
+      specs.push(`CIDR: ${costDetails.cidrBlock}`);
+    }
+    
+    // Function specific
+    if (costDetails.runtime) {
+      specs.push(`${costDetails.runtime} (${costDetails.memory}MB)`);
+    }
+    
+    // Container specific
+    if (costDetails.nodeCount) {
+      specs.push(`${costDetails.nodeCount} nodes`);
+    }
+    
+    return specs.length > 0 ? specs.join(', ') : '-';
+  };
+
   const analyzeMutation = useMutation({
     mutationFn: async (uploadResult: any) => {
       if (uploadResult.costAnalysis) {
@@ -265,7 +311,7 @@ export default function TerraformUpload() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
                     {uploadResult.inventory.summary.totalResources}
@@ -274,21 +320,30 @@ export default function TerraformUpload() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {uploadResult.inventory.summary.providers.length}
+                    {Object.keys(uploadResult.inventory.summary.providers).length}
                   </div>
                   <div className="text-sm text-gray-600">Providers</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {uploadResult.inventory.summary.services.length}
+                    {Object.keys(uploadResult.inventory.summary.services).length}
                   </div>
                   <div className="text-sm text-gray-600">Services</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {uploadResult.inventory.summary.regions.length}
+                    {Object.keys(uploadResult.inventory.summary.regions).length}
                   </div>
                   <div className="text-sm text-gray-600">Regions</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    ${uploadResult.inventory.resources
+                      .reduce((total: number, resource: any) => 
+                        total + (resource.costDetails?.estimatedMonthlyCost || 0), 0)
+                      .toFixed(2)}
+                  </div>
+                  <div className="text-sm text-gray-600">Est. Monthly Cost</div>
                 </div>
               </div>
 
@@ -305,7 +360,9 @@ export default function TerraformUpload() {
                         <TableHead>Provider</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>State</TableHead>
-                        <TableHead>Specs</TableHead>
+                        <TableHead>Shape/Type</TableHead>
+                        <TableHead>Specifications</TableHead>
+                        <TableHead>Est. Cost/Month</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -331,7 +388,18 @@ export default function TerraformUpload() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm">
-                            {resource.costDetails?.instanceType || resource.costDetails?.size || '-'}
+                            {resource.costDetails?.instanceType || 
+                             resource.costDetails?.shape || 
+                             resource.costDetails?.vm_size || 
+                             resource.costDetails?.machine_type || 
+                             resource.costDetails?.storageType || '-'}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {getResourceSpecs(resource.costDetails)}
+                          </TableCell>
+                          <TableCell className="text-sm font-medium">
+                            {resource.costDetails?.estimatedMonthlyCost ? 
+                              `$${resource.costDetails.estimatedMonthlyCost.toFixed(2)}` : '-'}
                           </TableCell>
                         </TableRow>
                       ))}

@@ -318,6 +318,11 @@ export class TerraformStateParser {
                             attributes.shape;
       details.vcpus = this.getVCPUs(details.instanceType);
       details.memory = this.getMemory(details.instanceType);
+      details.architecture = attributes.architecture || attributes.vm_architecture;
+      details.platform = attributes.platform || attributes.vm_platform;
+      details.tenancy = attributes.tenancy || attributes.dedicated_host_affinity;
+      details.spotPrice = attributes.spot_price || attributes.max_spot_price;
+      details.spotType = attributes.spot_type || attributes.spot_request_type;
     }
 
     // Storage details
@@ -330,6 +335,10 @@ export class TerraformStateParser {
                            attributes.storage_type || 
                            attributes.storage_class ||
                            attributes.storage_tier;
+      details.iops = attributes.iops || attributes.provisioned_iops;
+      details.throughput = attributes.throughput || attributes.provisioned_throughput;
+      details.encrypted = attributes.encrypted || attributes.kms_key_id;
+      details.backupRetention = attributes.backup_retention_period || attributes.retention_period;
     }
 
     // Database details
@@ -338,13 +347,68 @@ export class TerraformStateParser {
       details.engineVersion = attributes.engine_version || attributes.database_version;
       details.instanceClass = attributes.instance_class || attributes.db_instance_class;
       details.allocatedStorage = attributes.allocated_storage || attributes.storage_size_in_gbs;
+      details.multiAz = attributes.multi_az || attributes.availability_type;
+      details.backupWindow = attributes.backup_window;
+      details.maintenanceWindow = attributes.maintenance_window;
+      details.performanceInsights = attributes.performance_insights_enabled;
+      details.monitoringInterval = attributes.monitoring_interval;
+      details.monitoringRoleArn = attributes.monitoring_role_arn;
     }
 
     // Load balancer details
     if (tfType.includes('lb') || tfType.includes('load_balancer')) {
       details.scheme = attributes.scheme || attributes.load_balancer_type;
       details.type = attributes.type || attributes.load_balancer_type;
+      details.algorithm = attributes.algorithm || attributes.load_balancing_algorithm;
+      details.healthCheck = attributes.health_check || attributes.health_check_config;
+      details.sslCertificate = attributes.ssl_certificate || attributes.certificate_arn;
+      details.idleTimeout = attributes.idle_timeout;
+      details.connectionDraining = attributes.connection_draining;
     }
+
+    // Network details
+    if (tfType.includes('vpc') || tfType.includes('subnet') || tfType.includes('gateway')) {
+      details.cidrBlock = attributes.cidr_block || attributes.address_prefix;
+      details.availabilityZone = attributes.availability_zone || attributes.availability_domain;
+      details.publiclyAccessible = attributes.publicly_accessible || attributes.public_ip;
+      details.natGatewayId = attributes.nat_gateway_id;
+      details.routeTableId = attributes.route_table_id;
+    }
+
+    // Container/Kubernetes details
+    if (tfType.includes('container') || tfType.includes('kubernetes') || tfType.includes('eks') || tfType.includes('gke')) {
+      details.nodeCount = attributes.node_count || attributes.desired_size;
+      details.nodeType = attributes.node_type || attributes.instance_type;
+      details.minSize = attributes.min_size;
+      details.maxSize = attributes.max_size;
+      details.diskSize = attributes.disk_size || attributes.disk_size_gb;
+      details.kubernetesVersion = attributes.kubernetes_version || attributes.version;
+      details.networkPolicy = attributes.network_policy_enabled;
+      details.podSecurityPolicy = attributes.pod_security_policy_enabled;
+    }
+
+    // Function details
+    if (tfType.includes('function') || tfType.includes('lambda')) {
+      details.runtime = attributes.runtime || attributes.function_runtime;
+      details.memory = attributes.memory || attributes.function_memory;
+      details.timeout = attributes.timeout || attributes.function_timeout;
+      details.handler = attributes.handler || attributes.function_handler;
+      details.layers = attributes.layers;
+      details.environment = attributes.environment || attributes.environment_variables;
+    }
+
+    // CDN details
+    if (tfType.includes('cdn') || tfType.includes('cloudfront') || tfType.includes('distribution')) {
+      details.origins = attributes.origins || attributes.origin;
+      details.cacheBehaviors = attributes.cache_behaviors;
+      details.priceClass = attributes.price_class;
+      details.aliases = attributes.aliases;
+      details.sslCertificate = attributes.ssl_certificate;
+      details.defaultRootObject = attributes.default_root_object;
+    }
+
+    // Add estimated monthly cost based on resource details
+    details.estimatedMonthlyCost = this.estimateMonthlyCost(tfType, details);
 
     return details;
   }
@@ -391,24 +455,46 @@ export class TerraformStateParser {
       // AWS
       't2.micro': 1, 't2.small': 1, 't2.medium': 2, 't2.large': 2, 't2.xlarge': 4, 't2.2xlarge': 8,
       't3.micro': 2, 't3.small': 2, 't3.medium': 2, 't3.large': 2, 't3.xlarge': 4, 't3.2xlarge': 8,
+      't3a.micro': 2, 't3a.small': 2, 't3a.medium': 2, 't3a.large': 2, 't3a.xlarge': 4, 't3a.2xlarge': 8,
+      't4g.micro': 2, 't4g.small': 2, 't4g.medium': 2, 't4g.large': 2, 't4g.xlarge': 4, 't4g.2xlarge': 8,
       'm5.large': 2, 'm5.xlarge': 4, 'm5.2xlarge': 8, 'm5.4xlarge': 16, 'm5.8xlarge': 32, 'm5.12xlarge': 48, 'm5.16xlarge': 64, 'm5.24xlarge': 96,
+      'm5a.large': 2, 'm5a.xlarge': 4, 'm5a.2xlarge': 8, 'm5a.4xlarge': 16, 'm5a.8xlarge': 32, 'm5a.12xlarge': 48, 'm5a.16xlarge': 64, 'm5a.24xlarge': 96,
+      'm6i.large': 2, 'm6i.xlarge': 4, 'm6i.2xlarge': 8, 'm6i.4xlarge': 16, 'm6i.8xlarge': 32, 'm6i.12xlarge': 48, 'm6i.16xlarge': 64, 'm6i.24xlarge': 96,
       'c5.large': 2, 'c5.xlarge': 4, 'c5.2xlarge': 8, 'c5.4xlarge': 16, 'c5.9xlarge': 36, 'c5.12xlarge': 48, 'c5.18xlarge': 72, 'c5.24xlarge': 96,
+      'c5a.large': 2, 'c5a.xlarge': 4, 'c5a.2xlarge': 8, 'c5a.4xlarge': 16, 'c5a.8xlarge': 32, 'c5a.12xlarge': 48, 'c5a.16xlarge': 64, 'c5a.24xlarge': 96,
+      'c6i.large': 2, 'c6i.xlarge': 4, 'c6i.2xlarge': 8, 'c6i.4xlarge': 16, 'c6i.8xlarge': 32, 'c6i.12xlarge': 48, 'c6i.16xlarge': 64, 'c6i.24xlarge': 96,
       'r5.large': 2, 'r5.xlarge': 4, 'r5.2xlarge': 8, 'r5.4xlarge': 16, 'r5.8xlarge': 32, 'r5.12xlarge': 48, 'r5.16xlarge': 64, 'r5.24xlarge': 96,
+      'r5a.large': 2, 'r5a.xlarge': 4, 'r5a.2xlarge': 8, 'r5a.4xlarge': 16, 'r5a.8xlarge': 32, 'r5a.12xlarge': 48, 'r5a.16xlarge': 64, 'r5a.24xlarge': 96,
+      'r6i.large': 2, 'r6i.xlarge': 4, 'r6i.2xlarge': 8, 'r6i.4xlarge': 16, 'r6i.8xlarge': 32, 'r6i.12xlarge': 48, 'r6i.16xlarge': 64, 'r6i.24xlarge': 96,
+      'g4dn.xlarge': 4, 'g4dn.2xlarge': 8, 'g4dn.4xlarge': 16, 'g4dn.8xlarge': 32, 'g4dn.12xlarge': 48, 'g4dn.16xlarge': 64,
+      'p3.2xlarge': 8, 'p3.8xlarge': 32, 'p3.16xlarge': 64,
+      'p4d.24xlarge': 96,
       
       // Azure
       'Standard_B1s': 1, 'Standard_B2s': 2, 'Standard_B4ms': 4, 'Standard_B8ms': 8,
       'Standard_D2s_v3': 2, 'Standard_D4s_v3': 4, 'Standard_D8s_v3': 8, 'Standard_D16s_v3': 16, 'Standard_D32s_v3': 32, 'Standard_D64s_v3': 64,
       'Standard_E2s_v3': 2, 'Standard_E4s_v3': 4, 'Standard_E8s_v3': 8, 'Standard_E16s_v3': 16, 'Standard_E32s_v3': 32, 'Standard_E64s_v3': 64,
+      'Standard_F2s_v2': 2, 'Standard_F4s_v2': 4, 'Standard_F8s_v2': 8, 'Standard_F16s_v2': 16, 'Standard_F32s_v2': 32, 'Standard_F64s_v2': 64,
+      'Standard_NC6s_v3': 6, 'Standard_NC12s_v3': 12, 'Standard_NC24s_v3': 24,
+      'Standard_ND6s': 6, 'Standard_ND12s': 12, 'Standard_ND24s': 24,
       
       // GCP
       'e2-micro': 2, 'e2-small': 2, 'e2-medium': 2, 'e2-standard-2': 2, 'e2-standard-4': 4, 'e2-standard-8': 8, 'e2-standard-16': 16, 'e2-standard-32': 32,
       'n1-standard-1': 1, 'n1-standard-2': 2, 'n1-standard-4': 4, 'n1-standard-8': 8, 'n1-standard-16': 16, 'n1-standard-32': 32, 'n1-standard-64': 64, 'n1-standard-96': 96,
+      'n2-standard-2': 2, 'n2-standard-4': 4, 'n2-standard-8': 8, 'n2-standard-16': 16, 'n2-standard-32': 32, 'n2-standard-48': 48, 'n2-standard-64': 64, 'n2-standard-80': 80, 'n2-standard-96': 96, 'n2-standard-128': 128,
       'c2-standard-4': 4, 'c2-standard-8': 8, 'c2-standard-16': 16, 'c2-standard-30': 30, 'c2-standard-60': 60,
+      'm1-megamem-96': 96, 'm1-ultramem-40': 40, 'm1-ultramem-80': 80, 'm1-ultramem-160': 160,
+      'a2-highgpu-1g': 12, 'a2-highgpu-2g': 24, 'a2-highgpu-4g': 48, 'a2-highgpu-8g': 96,
       
       // Oracle Cloud
       'VM.Standard.E2.1.Micro': 1, 'VM.Standard.E2.1': 1, 'VM.Standard.E2.2': 2, 'VM.Standard.E2.4': 4, 'VM.Standard.E2.8': 8,
       'VM.Standard.E3.Flex': 1, 'VM.Standard.E4.Flex': 1, 'VM.Standard.E5.Flex': 1,
-      'BM.Standard.E2.64': 64, 'BM.Standard.E3.128': 128, 'BM.Standard.E4.128': 128
+      'VM.Standard1.1': 1, 'VM.Standard1.2': 2, 'VM.Standard1.4': 4, 'VM.Standard1.8': 8, 'VM.Standard1.16': 16,
+      'VM.Standard2.1': 1, 'VM.Standard2.2': 2, 'VM.Standard2.4': 4, 'VM.Standard2.8': 8, 'VM.Standard2.16': 16, 'VM.Standard2.24': 24,
+      'VM.Standard3.Flex': 1, 'VM.Standard4.Flex': 1, 'VM.Standard5.Flex': 1,
+      'BM.Standard.E2.64': 64, 'BM.Standard.E3.128': 128, 'BM.Standard.E4.128': 128,
+      'BM.Standard1.36': 36, 'BM.Standard2.52': 52, 'BM.Standard3.72': 72,
+      'BM.GPU2.2': 28, 'BM.GPU3.8': 52, 'BM.GPU4.8': 52
     };
     
     return vcpuMap[instanceType] || 2;
@@ -466,6 +552,131 @@ export class TerraformStateParser {
       summary[resource.location] = (summary[resource.location] || 0) + 1;
     });
     return summary;
+  }
+
+  private estimateMonthlyCost(tfType: string, details: any): number {
+    let baseCost = 0;
+    const provider = this.extractProviderFromType(tfType);
+
+    // Instance/VM costs
+    if (tfType.includes('instance') || tfType.includes('vm')) {
+      const instanceType = details.instanceType;
+      const vcpus = details.vcpus || 2;
+      const memory = details.memory || 4;
+      
+      // Base pricing per vCPU and GB memory (monthly)
+      const pricing = {
+        aws: { vcpu: 0.05, memory: 0.005 }, // $0.05/vCPU/hour, $0.005/GB/hour
+        azure: { vcpu: 0.04, memory: 0.004 },
+        gcp: { vcpu: 0.03, memory: 0.004 },
+        oracle: { vcpu: 0.06, memory: 0.006 }
+      };
+      
+      const providerPricing = pricing[provider] || pricing.aws;
+      baseCost = (vcpus * providerPricing.vcpu + memory * providerPricing.memory) * 24 * 30;
+      
+      // Adjust for instance type families
+      if (instanceType?.includes('t2') || instanceType?.includes('t3')) {
+        baseCost *= 0.7; // Burstable instances are cheaper
+      } else if (instanceType?.includes('c5') || instanceType?.includes('c6')) {
+        baseCost *= 1.2; // Compute optimized are more expensive
+      } else if (instanceType?.includes('r5') || instanceType?.includes('r6')) {
+        baseCost *= 1.3; // Memory optimized are more expensive
+      } else if (instanceType?.includes('g4') || instanceType?.includes('p3') || instanceType?.includes('p4')) {
+        baseCost *= 3.0; // GPU instances are much more expensive
+      }
+    }
+
+    // Storage costs
+    if (tfType.includes('storage') || tfType.includes('bucket') || tfType.includes('volume') || tfType.includes('disk')) {
+      const storage = details.storage || 0;
+      const storageType = details.storageType;
+      
+      const storagePricing = {
+        aws: { standard: 0.023, gp2: 0.10, gp3: 0.08, io1: 0.125, io2: 0.125 },
+        azure: { standard: 0.018, premium: 0.20, ultra: 0.15 },
+        gcp: { standard: 0.020, ssd: 0.17, balanced: 0.10 },
+        oracle: { standard: 0.025, balanced: 0.12, performance: 0.15 }
+      };
+      
+      const providerStoragePricing = storagePricing[provider] || storagePricing.aws;
+      const pricePerGB = providerStoragePricing[storageType] || providerStoragePricing.standard;
+      baseCost += (storage / 1024) * pricePerGB * 30; // Convert to GB and monthly
+    }
+
+    // Database costs
+    if (tfType.includes('database') || tfType.includes('rds') || tfType.includes('sql')) {
+      const instanceClass = details.instanceClass;
+      const allocatedStorage = details.allocatedStorage || 0;
+      
+      const dbPricing = {
+        aws: { 'db.t3.micro': 15, 'db.t3.small': 30, 'db.t3.medium': 60, 'db.r5.large': 200 },
+        azure: { 'Basic': 5, 'S0': 15, 'S1': 30, 'S2': 60, 'S3': 120 },
+        gcp: { 'db-f1-micro': 10, 'db-g1-small': 25, 'db-n1-standard-1': 50 },
+        oracle: { 'Standard': 20, 'High': 100, 'Extreme': 200 }
+      };
+      
+      const providerDbPricing = dbPricing[provider] || dbPricing.aws;
+      baseCost += providerDbPricing[instanceClass] || 50;
+      
+      // Add storage cost
+      if (allocatedStorage > 0) {
+        baseCost += (allocatedStorage / 1024) * 0.115 * 30; // $0.115/GB/month
+      }
+    }
+
+    // Load balancer costs
+    if (tfType.includes('lb') || tfType.includes('load_balancer')) {
+      const lbPricing = {
+        aws: { application: 22.5, network: 22.5, classic: 18 },
+        azure: { standard: 18, basic: 0 },
+        gcp: { standard: 18, premium: 18 },
+        oracle: { standard: 20 }
+      };
+      
+      const providerLbPricing = lbPricing[provider] || lbPricing.aws;
+      const lbType = details.type || 'application';
+      baseCost += providerLbPricing[lbType] || 20;
+    }
+
+    // Container/Kubernetes costs
+    if (tfType.includes('container') || tfType.includes('kubernetes') || tfType.includes('eks') || tfType.includes('gke')) {
+      const nodeCount = details.nodeCount || 1;
+      const nodeType = details.nodeType;
+      
+      // Kubernetes control plane cost
+      baseCost += 73; // ~$73/month for managed Kubernetes
+      
+      // Node costs (estimated based on instance type)
+      if (nodeType) {
+        const nodeCost = this.estimateMonthlyCost(`aws_instance`, { instanceType: nodeType, vcpus: this.getVCPUs(nodeType), memory: this.getMemory(nodeType) });
+        baseCost += nodeCost * nodeCount;
+      }
+    }
+
+    // Function costs
+    if (tfType.includes('function') || tfType.includes('lambda')) {
+      const memory = details.memory || 128;
+      const timeout = details.timeout || 3;
+      
+      // Estimate based on 1M requests/month, 100ms average duration
+      const requests = 1000000;
+      const duration = 0.1; // 100ms in seconds
+      
+      const requestCost = requests * 0.0000002; // $0.20 per 1M requests
+      const computeCost = (requests * duration * memory / 1024) * 0.0000166667; // $0.0000166667 per GB-second
+      
+      baseCost += requestCost + computeCost;
+    }
+
+    // CDN costs
+    if (tfType.includes('cdn') || tfType.includes('cloudfront') || tfType.includes('distribution')) {
+      // Estimate based on 1TB data transfer/month
+      const dataTransfer = 1000; // GB
+      baseCost += dataTransfer * 0.085; // $0.085/GB for first 10TB
+    }
+
+    return Math.round(baseCost * 100) / 100; // Round to 2 decimal places
   }
 }
 
