@@ -38,7 +38,7 @@ export default function CloudCredentials() {
 
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; provider: string; encryptedCredentials: string }) => {
-      return await apiRequest("/api/credentials", "POST", data);
+      return await apiRequest("POST", "/api/credentials", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/credentials"] });
@@ -71,7 +71,7 @@ export default function CloudCredentials() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/credentials/${id}`, "DELETE");
+      return await apiRequest("DELETE", `/api/credentials/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/credentials"] });

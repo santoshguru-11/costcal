@@ -220,11 +220,14 @@ export class TerraformStateParser {
 
       for (const instance of resource.instances) {
         const attributes = instance.attributes || {};
+        
         const resourceInfo = this.resourceTypeMap[resource.type] || {
           type: 'Unknown',
           service: 'Other',
           provider: this.extractProviderFromType(resource.type)
         };
+
+        const costDetails = this.extractCostDetails(resource.type, attributes);
 
         const unifiedResource: UnifiedResource = {
           id: attributes.id || `${resource.type}.${resource.name}`,
@@ -234,7 +237,7 @@ export class TerraformStateParser {
           provider: resourceInfo.provider,
           location: this.extractLocation(attributes, resourceInfo.provider),
           state: this.extractState(attributes),
-          costDetails: this.extractCostDetails(resource.type, attributes),
+          costDetails: costDetails,
           tags: this.extractTags(attributes),
           metadata: {
             terraformType: resource.type,
