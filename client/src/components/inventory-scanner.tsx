@@ -86,11 +86,32 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
 
   const scanMutation = useMutation({
     mutationFn: async () => {
+      // Load actual credentials from server for each provider
+      const credentialsWithData = await Promise.all(
+        credentials.map(async (cred) => {
+          try {
+            const response = await fetch(`/api/credentials/${cred.id}`, {
+              credentials: 'include'
+            });
+            if (response.ok) {
+              const credentialData = await response.json();
+              return {
+                provider: cred.provider,
+                credentials: credentialData.credentials
+              };
+            }
+          } catch (error) {
+            console.error(`Failed to load credentials for ${cred.provider}:`, error);
+          }
+          return {
+            provider: cred.provider,
+            credentials: cred.credentials
+          };
+        })
+      );
+
       const scanRequest = {
-        credentials: credentials.map(cred => ({
-          provider: cred.provider,
-          credentials: cred.credentials
-        }))
+        credentials: credentialsWithData
       };
 
       // Simulate progress updates

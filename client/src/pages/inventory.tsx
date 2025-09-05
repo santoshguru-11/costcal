@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CloudCredentialsForm, CloudCredential } from "@/components/cloud-credentials-form";
 import { InventoryScanner } from "@/components/inventory-scanner";
@@ -13,10 +13,12 @@ import {
   Settings, 
   ArrowRight, 
   CheckCircle,
-  AlertCircle 
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 interface UnifiedInventory {
   resources: Array<{
@@ -47,11 +49,26 @@ interface UnifiedInventory {
   scanDuration: number;
 }
 
+interface SavedCredential {
+  id: string;
+  name: string;
+  provider: string;
+  isValidated: boolean;
+  createdAt: string;
+}
+
 export function InventoryPage() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [credentials, setCredentials] = useState<CloudCredential[]>([]);
   const [activeTab, setActiveTab] = useState('setup');
   const [scannedInventory, setScannedInventory] = useState<UnifiedInventory | null>(null);
+
+  // Load saved credentials from server
+  const { data: savedCredentials = [], isLoading: isLoadingCredentials, refetch: refetchCredentials } = useQuery<SavedCredential[]>({
+    queryKey: ["/api/credentials"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
 
   const validateCredentialsMutation = useMutation({
     mutationFn: async ({ provider, credentials }: { provider: string; credentials: any }) => {
@@ -62,6 +79,65 @@ export function InventoryPage() {
       return await response.json();
     }
   });
+
+  // Convert saved credentials to the format expected by inventory scanner
+  const convertSavedCredentials = (savedCreds: SavedCredential[]): CloudCredential[] => {
+    return savedCreds.map(cred => ({
+      id: cred.id,
+      provider: cred.provider as 'aws' | 'azure' | 'gcp' | 'oci',
+      name: cred.name,
+      credentials: {}, // We'll load the actual credentials when needed
+      validated: cred.isValidated
+    }));
+  };
+
+  // Auto-load saved credentials when they're available
+  React.useEffect(() => {
+    if (savedCredentials.length > 0 && credentials.length === 0) {
+      const convertedCredentials = convertSavedCredentials(savedCredentials);
+      setCredentials(convertedCredentials);
+      
+      // Validate credentials that aren't already validated
+      const validateCredentials = async () => {
+        const validationPromises = convertedCredentials
+          .filter(c => !c.validated)
+          .map(async (cred) => {
+            try {
+              // Load the actual credentials from server
+              const response = await fetch(`/api/credentials/${cred.id}`, {
+                credentials: 'include'
+              });
+              if (response.ok) {
+                const credentialData = await response.json();
+                const validation = await validateCredentialsMutation.mutateAsync({
+                  provider: cred.provider,
+                  credentials: credentialData.credentials
+                });
+                return { ...cred, validated: validation.valid };
+              }
+            } catch (error) {
+              console.error(`Failed to validate ${cred.provider} credentials:`, error);
+            }
+            return cred;
+          });
+
+        const validatedCredentials = await Promise.all(validationPromises);
+        setCredentials(validatedCredentials);
+        
+        // If we have validated credentials, auto-advance to scan tab
+        const validatedCount = validatedCredentials.filter(c => c.validated).length;
+        if (validatedCount > 0) {
+          setActiveTab('scan');
+          toast({
+            title: "Credentials Loaded",
+            description: `Found ${validatedCount} validated cloud credential${validatedCount !== 1 ? 's' : ''}. Ready to scan!`,
+          });
+        }
+      };
+
+      validateCredentials();
+    }
+  }, [savedCredentials, credentials.length, toast, validateCredentialsMutation]);
 
   const handleCredentialsChange = (newCredentials: CloudCredential[]) => {
     setCredentials(newCredentials);
@@ -146,44 +222,103 @@ export function InventoryPage() {
         </TabsList>
 
         <TabsContent value="setup" className="mt-8">
-          <CloudCredentialsForm
-            credentials={credentials}
-            onCredentialsChange={handleCredentialsChange}
-            onValidateCredentials={handleValidateCredentials}
-          />
-
-          {credentials.length > 0 && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  Ready for Scanning
-                </CardTitle>
-                <CardDescription>
-                  You have {validCredentials.length} validated credential{validCredentials.length !== 1 ? 's' : ''} ready for scanning.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    {credentials.map(cred => (
-                      <Badge key={cred.id} variant={cred.validated ? "default" : "secondary"} className="capitalize">
-                        {cred.provider}
-                        {cred.validated && <CheckCircle className="h-3 w-3 ml-1" />}
-                      </Badge>
-                    ))}
-                  </div>
-                  <Button 
-                    onClick={() => setActiveTab('scan')}
-                    disabled={validCredentials.length === 0}
-                    data-testid="button-proceed-to-scan"
-                  >
-                    Proceed to Scanning
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
+          {isLoadingCredentials ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-8">
+                <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                Loading saved credentials...
               </CardContent>
             </Card>
+          ) : savedCredentials.length > 0 ? (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    Saved Cloud Credentials
+                  </CardTitle>
+                  <CardDescription>
+                    Found {savedCredentials.length} saved credential{savedCredentials.length !== 1 ? 's' : ''} from your account.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {savedCredentials.map(cred => (
+                        <Badge key={cred.id} variant={cred.isValidated ? "default" : "secondary"} className="capitalize">
+                          {cred.provider} - {cred.name}
+                          {cred.isValidated && <CheckCircle className="h-3 w-3 ml-1" />}
+                        </Badge>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-muted-foreground">
+                        {validCredentials.length} of {credentials.length} credentials are validated and ready for scanning.
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline"
+                          onClick={() => refetchCredentials()}
+                          size="sm"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Refresh
+                        </Button>
+                        <Button 
+                          onClick={() => setActiveTab('scan')}
+                          disabled={validCredentials.length === 0}
+                          data-testid="button-proceed-to-scan"
+                        >
+                          Start Scanning
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {validCredentials.length === 0 && credentials.length > 0 && (
+                      <Alert className="mt-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          Your credentials need to be validated before scanning. Please check your credential details and try refreshing.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add New Credentials</CardTitle>
+                  <CardDescription>
+                    Need to add credentials for additional cloud providers? Use the form below.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CloudCredentialsForm
+                    credentials={credentials}
+                    onCredentialsChange={handleCredentialsChange}
+                    onValidateCredentials={handleValidateCredentials}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  No saved credentials found. Add your cloud provider credentials below to get started.
+                </AlertDescription>
+              </Alert>
+              
+              <CloudCredentialsForm
+                credentials={credentials}
+                onCredentialsChange={handleCredentialsChange}
+                onValidateCredentials={handleValidateCredentials}
+              />
+            </div>
           )}
         </TabsContent>
 

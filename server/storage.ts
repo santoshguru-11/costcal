@@ -15,7 +15,7 @@ import {
   inventoryScans 
 } from "@shared/schema";
 import { db } from "./db.js";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { encryptSync, decryptSync } from "./encryption.js";
 
 export interface IStorage {
@@ -125,6 +125,23 @@ export class DatabaseStorage implements IStorage {
       ...cred,
       encryptedCredentials: decryptSync(cred.encryptedCredentials)
     }));
+  }
+
+  async getCloudCredential(id: string, userId: string): Promise<CloudCredential | undefined> {
+    const [credential] = await db
+      .select()
+      .from(cloudCredentials)
+      .where(and(eq(cloudCredentials.id, id), eq(cloudCredentials.userId, userId)));
+    
+    if (!credential) {
+      return undefined;
+    }
+    
+    // Decrypt credentials before returning
+    return {
+      ...credential,
+      encryptedCredentials: decryptSync(credential.encryptedCredentials)
+    };
   }
 
   async updateCloudCredential(id: string, updates: Partial<InsertCloudCredential>): Promise<CloudCredential | undefined> {

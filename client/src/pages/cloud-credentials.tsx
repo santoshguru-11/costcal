@@ -146,6 +146,14 @@ export default function CloudCredentials() {
     "token_uri": "https://oauth2.googleapis.com/token"
   }
 }`;
+      case "oci":
+        return `{
+  "tenancyId": "ocid1.tenancy.oc1..aaaaaaaa...",
+  "userId": "ocid1.user.oc1..aaaaaaaa...",
+  "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+  "privateKey": "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n",
+  "region": "us-ashburn-1"
+}`;
       default:
         return "";
     }
@@ -155,13 +163,13 @@ export default function CloudCredentials() {
     <div className="container mx-auto px-4 py-8">
       <Helmet>
         <title>Cloud Credentials - Cloud Cost Optimizer</title>
-        <meta name="description" content="Manage your cloud provider credentials for AWS, Azure, and GCP to enable live resource scanning and cost analysis." />
+        <meta name="description" content="Manage your cloud provider credentials for AWS, Azure, GCP, and Oracle Cloud to enable live resource scanning and cost analysis." />
       </Helmet>
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Cloud Credentials</h1>
         <p className="text-gray-600">
-          Manage your cloud provider credentials to enable live resource scanning and cost analysis.
+          Manage your cloud provider credentials for AWS, Azure, GCP, and Oracle Cloud to enable live resource scanning and cost analysis.
         </p>
       </div>
 
@@ -264,6 +272,7 @@ export default function CloudCredentials() {
                       <SelectItem value="aws">Amazon Web Services (AWS)</SelectItem>
                       <SelectItem value="azure">Microsoft Azure</SelectItem>
                       <SelectItem value="gcp">Google Cloud Platform (GCP)</SelectItem>
+                      <SelectItem value="oci">Oracle Cloud Infrastructure (OCI)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

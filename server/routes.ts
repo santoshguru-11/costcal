@@ -126,6 +126,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/credentials/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const credential = await storage.getCloudCredential(req.params.id, userId);
+      if (!credential) {
+        return res.status(404).json({ message: "Credential not found" });
+      }
+      // Return decrypted credentials for scanning
+      res.json({
+        id: credential.id,
+        name: credential.name,
+        provider: credential.provider,
+        credentials: credential.encryptedCredentials, // This is already decrypted by storage
+        isValidated: credential.isValidated
+      });
+    } catch (error) {
+      console.error("Get credential error:", error);
+      res.status(500).json({ message: "Failed to retrieve credential" });
+    }
+  });
+
   app.delete("/api/credentials/:id", isAuthenticated, async (req, res) => {
     try {
       const deleted = await storage.deleteCloudCredential(req.params.id);
@@ -745,8 +766,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message = isValid ? "GCP credentials are valid" : "Missing GCP credentials fields";
           break;
         case 'oci':
-          isValid = credentials.tenancyId && credentials.userId && credentials.fingerprint && credentials.privateKey && credentials.region;
-          message = isValid ? "Oracle Cloud credentials are valid" : "Missing Oracle Cloud credentials fields";
+          // Basic field validation first
+          if (!credentials.tenancyId || !credentials.userId || !credentials.fingerprint || !credentials.privateKey || !credentials.region) {
+            isValid = false;
+            message = "Missing Oracle Cloud credentials fields";
+          } else {
+            try {
+              // Test actual OCI credentials by making an API call
+              const { OCIInventoryService } = await import('./services/oci-inventory.js');
+              const ociService = new OCIInventoryService(credentials);
+              isValid = await ociService.validateCredentials();
+              message = isValid ? "Oracle Cloud credentials are valid" : "Invalid Oracle Cloud credentials";
+            } catch (error) {
+              console.error('OCI credential validation error:', error);
+              isValid = false;
+              message = `Oracle Cloud credential validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+            }
+          }
           break;
         default:
           isValid = false;
