@@ -13,7 +13,8 @@ import {
   Settings, 
   ArrowRight, 
   CheckCircle,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useLocation } from "wouter";
@@ -60,6 +61,7 @@ export function InventoryPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [credentials, setCredentials] = useState<CloudCredential[]>([]);
+  const [selectedCredentials, setSelectedCredentials] = useState<CloudCredential[]>([]);
   const [activeTab, setActiveTab] = useState('setup');
   const [scannedInventory, setScannedInventory] = useState<UnifiedInventory | null>(null);
 
@@ -87,6 +89,9 @@ export function InventoryPage() {
       const convertedCredentials = convertSavedCredentials(savedCredentials);
       setCredentials(convertedCredentials);
       
+      // Auto-select all credentials by default
+      setSelectedCredentials(convertedCredentials);
+      
       // Auto-advance to scan tab if we have credentials
       if (convertedCredentials.length > 0) {
         setActiveTab('scan');
@@ -97,6 +102,27 @@ export function InventoryPage() {
       }
     }
   }, [savedCredentials, credentials.length, toast]);
+
+  // Handle credential selection
+  const handleCredentialToggle = (credential: CloudCredential) => {
+    setSelectedCredentials(prev => {
+      const isSelected = prev.some(cred => cred.id === credential.id);
+      if (isSelected) {
+        return prev.filter(cred => cred.id !== credential.id);
+      } else {
+        return [...prev, credential];
+      }
+    });
+  };
+
+  // Handle select all/none
+  const handleSelectAll = () => {
+    if (selectedCredentials.length === credentials.length) {
+      setSelectedCredentials([]);
+    } else {
+      setSelectedCredentials(credentials);
+    }
+  };
 
   const handleCredentialsChange = (newCredentials: CloudCredential[]) => {
     setCredentials(newCredentials);
@@ -271,7 +297,7 @@ export function InventoryPage() {
         </TabsContent>
 
         <TabsContent value="scan" className="mt-8">
-          {validCredentials.length === 0 ? (
+          {credentials.length === 0 ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
@@ -279,10 +305,98 @@ export function InventoryPage() {
               </AlertDescription>
             </Alert>
           ) : (
-            <InventoryScanner
-              credentials={validCredentials}
-              onInventoryScanned={handleInventoryScanned}
-            />
+            <div className="space-y-6">
+              {/* Cloud Account Selection */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Cloud className="h-5 w-5" />
+                    Select Cloud Accounts
+                  </CardTitle>
+                  <CardDescription>
+                    Choose which cloud accounts to scan for inventory discovery.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSelectAll}
+                        className="flex items-center gap-2"
+                      >
+                        {selectedCredentials.length === credentials.length ? (
+                          <>
+                            <CheckCircle className="h-4 w-4" />
+                            Deselect All
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4" />
+                            Select All
+                          </>
+                        )}
+                      </Button>
+                      <Badge variant="secondary">
+                        {selectedCredentials.length} of {credentials.length} selected
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {credentials.map((credential) => {
+                        const isSelected = selectedCredentials.some(cred => cred.id === credential.id);
+                        return (
+                          <div
+                            key={credential.id}
+                            className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                              isSelected 
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            onClick={() => handleCredentialToggle(credential)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                isSelected 
+                                  ? 'border-blue-500 bg-blue-500' 
+                                  : 'border-gray-300'
+                              }`}>
+                                {isSelected && <CheckCircle className="h-3 w-3 text-white" />}
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-medium">{credential.name}</div>
+                                <div className="text-sm text-gray-500 capitalize">
+                                  {credential.provider}
+                                </div>
+                              </div>
+                              <Badge variant={isSelected ? "default" : "secondary"}>
+                                {isSelected ? "Selected" : "Available"}
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Inventory Scanner */}
+              {selectedCredentials.length > 0 ? (
+                <InventoryScanner
+                  credentials={selectedCredentials}
+                  onInventoryScanned={handleInventoryScanned}
+                />
+              ) : (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Please select at least one cloud account to start scanning.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
           )}
         </TabsContent>
 
@@ -352,7 +466,7 @@ export function InventoryPage() {
 
               {/* Display the full inventory scanner results */}
               <InventoryScanner
-                credentials={validCredentials}
+                credentials={credentials}
                 onInventoryScanned={handleInventoryScanned}
               />
             </div>

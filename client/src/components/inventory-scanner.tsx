@@ -86,6 +86,8 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
 
   const scanMutation = useMutation({
     mutationFn: async () => {
+      console.log('InventoryScanner - Selected credentials:', credentials);
+      
       // Load actual credentials from server for each provider
       const credentialsWithData = await Promise.all(
         credentials.map(async (cred) => {
@@ -110,28 +112,43 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
         })
       );
 
+      console.log('InventoryScanner - Credentials with data:', credentialsWithData);
+
       const scanRequest = {
         credentials: credentialsWithData
       };
 
-      // Simulate progress updates
+      // Get list of selected providers for progress updates
+      const selectedProviders = credentials.map(cred => cred.provider);
+      const providerNames = {
+        'aws': 'AWS',
+        'azure': 'Azure',
+        'gcp': 'Google Cloud',
+        'oci': 'Oracle Cloud'
+      };
+
+      // Simulate progress updates based on selected providers
       setScanProgress(10);
-      setCurrentProvider('Scanning AWS...');
+      if (selectedProviders.length > 0) {
+        setCurrentProvider(`Scanning ${providerNames[selectedProviders[0] as keyof typeof providerNames]}...`);
+      }
       
-      setTimeout(() => {
-        setScanProgress(40);
-        setCurrentProvider('Scanning Azure...');
-      }, 1000);
+      // Update progress for each selected provider
+      selectedProviders.forEach((provider, index) => {
+        const progress = 10 + (index + 1) * (80 / selectedProviders.length);
+        const delay = (index + 1) * 1000;
+        
+        setTimeout(() => {
+          setScanProgress(progress);
+          setCurrentProvider(`Scanning ${providerNames[provider as keyof typeof providerNames]}...`);
+        }, delay);
+      });
 
-      setTimeout(() => {
-        setScanProgress(70);
-        setCurrentProvider('Scanning Google Cloud...');
-      }, 2000);
-
+      // Final progress update
       setTimeout(() => {
         setScanProgress(90);
         setCurrentProvider('Finalizing scan and calculating costs...');
-      }, 3000);
+      }, (selectedProviders.length + 1) * 1000);
 
       const response = await apiRequest('POST', '/api/inventory/scan', scanRequest);
       const result = await response.json();
@@ -299,21 +316,25 @@ function InventoryResults({
 }: InventoryResultsProps) {
   const [activeTab, setActiveTab] = useState('overview');
   const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [providerFilter, setProviderFilter] = useState<string>("all");
   const [searchFilter, setSearchFilter] = useState<string>("");
 
-  // Filter resources based on service and search
+  // Filter resources based on service, provider, and search
   const filteredResources = inventory?.resources.filter(resource => {
     const matchesService = serviceFilter === "all" || resource.service === serviceFilter;
+    const matchesProvider = providerFilter === "all" || resource.provider === providerFilter;
     const matchesSearch = searchFilter === "" || 
       resource.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
       resource.type.toLowerCase().includes(searchFilter.toLowerCase()) ||
       resource.service.toLowerCase().includes(searchFilter.toLowerCase());
-    return matchesService && matchesSearch;
+    return matchesService && matchesProvider && matchesSearch;
   }) || [];
 
-  // Get unique services for filter dropdown
+  // Get unique services and providers for filter dropdowns
   const availableServices = inventory ? 
     Array.from(new Set(inventory.resources.map(r => r.service))).sort() : [];
+  const availableProviders = inventory ? 
+    Array.from(new Set(inventory.resources.map(r => r.provider))).sort() : [];
 
   return (
     <Card className="mt-6">
@@ -435,6 +456,22 @@ function InventoryResults({
                 </div>
               </div>
               <div className="flex gap-2 items-center">
+                <Select value={providerFilter} onValueChange={setProviderFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Providers</SelectItem>
+                    {availableProviders.map(provider => (
+                      <SelectItem key={provider} value={provider}>
+                        <div className="flex items-center gap-2">
+                          <Cloud className="h-4 w-4" />
+                          {provider.toUpperCase()}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select value={serviceFilter} onValueChange={setServiceFilter}>
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="Filter by service" />

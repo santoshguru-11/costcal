@@ -40,6 +40,7 @@ function Router() {
 }
 
 function App() {
+  console.log("App component - Rendering");
   return (
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>

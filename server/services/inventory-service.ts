@@ -174,6 +174,8 @@ export class CloudInventoryService {
   }
 
   private async scanSingleProvider(cloudCredentials: CloudCredentials): Promise<AWSInventory | AzureInventory | GCPInventory | OCIInventory> {
+    console.log(`Scanning ${cloudCredentials.provider} with credentials:`, JSON.stringify(cloudCredentials.credentials, null, 2));
+    
     switch (cloudCredentials.provider) {
       case 'aws':
         const awsService = new AWSInventoryService(cloudCredentials.credentials as AWSCredentials);

@@ -11,6 +11,8 @@ export function useAuth() {
     }
   });
 
+  console.log("useAuth - user:", user, "isLoading:", isLoading, "error:", error);
+
   const logout = async () => {
     try {
       await fetch("/api/logout", {
