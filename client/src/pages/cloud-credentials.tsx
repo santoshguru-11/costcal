@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { PlusIcon, TrashIcon, CheckCircleIcon, XCircleIcon, KeyIcon, RefreshCw } from "lucide-react";
+import { PlusIcon, TrashIcon, CheckCircleIcon, XCircleIcon, KeyIcon, RefreshCw, EditIcon } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 
 interface CloudCredential {
@@ -37,6 +37,12 @@ export default function CloudCredentials() {
   });
 
   const [isValidating, setIsValidating] = useState(false);
+  const [editingCredential, setEditingCredential] = useState<CloudCredential | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    provider: "",
+    credentials: ""
+  });
 
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; provider: string; encryptedCredentials: string }) => {
@@ -97,6 +103,43 @@ export default function CloudCredentials() {
       toast({
         title: "Error",
         description: "Failed to delete credentials",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string; provider: string; encryptedCredentials: string }) => {
+      return await apiRequest("PUT", `/api/credentials/${data.id}`, {
+        name: data.name,
+        provider: data.provider,
+        encryptedCredentials: data.encryptedCredentials
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/credentials"] });
+      setEditingCredential(null);
+      setEditForm({ name: "", provider: "", credentials: "" });
+      toast({
+        title: "Success",
+        description: "Credentials updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update credentials",
         variant: "destructive",
       });
     },
@@ -173,6 +216,58 @@ export default function CloudCredentials() {
     } finally {
       setIsValidating(false);
     }
+  };
+
+  const startEdit = async (credential: CloudCredential) => {
+    try {
+      // Fetch the full credential details
+      const response = await fetch(`/api/credentials/${credential.id}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch credential details');
+      }
+      
+      const credentialData = await response.json();
+      
+      setEditingCredential(credential);
+      setEditForm({
+        name: credential.name,
+        provider: credential.provider,
+        credentials: JSON.stringify(credentialData.credentials, null, 2)
+      });
+    } catch (error) {
+      console.error('Error fetching credential details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load credential details for editing",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdate = () => {
+    if (!editingCredential || !editForm.name || !editForm.provider || !editForm.credentials) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateMutation.mutate({
+      id: editingCredential.id,
+      name: editForm.name,
+      provider: editForm.provider,
+      encryptedCredentials: editForm.credentials,
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingCredential(null);
+    setEditForm({ name: "", provider: "", credentials: "" });
   };
 
   const getCredentialTemplate = (provider: string) => {
@@ -277,6 +372,15 @@ export default function CloudCredentials() {
                         </Badge>
                       </div>
                       <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => startEdit(credential)}
+                          data-testid={`button-edit-${credential.id}`}
+                        >
+                          <EditIcon className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
                         {!credential.isValidated && (
                           <Button
                             variant="outline"
@@ -305,6 +409,77 @@ export default function CloudCredentials() {
               )}
             </CardContent>
           </Card>
+
+          {/* Edit Credential Form */}
+          {editingCredential && (
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <EditIcon className="h-5 w-5" />
+                  Edit Credential
+                </CardTitle>
+                <CardDescription>
+                  Update your cloud provider credentials.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name">Credential Name</Label>
+                    <Input
+                      id="edit-name"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      placeholder="Enter credential name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-provider">Cloud Provider</Label>
+                    <Select
+                      value={editForm.provider}
+                      onValueChange={(value) => setEditForm({ ...editForm, provider: value, credentials: getCredentialTemplate(value) })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select cloud provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="aws">Amazon Web Services (AWS)</SelectItem>
+                        <SelectItem value="azure">Microsoft Azure</SelectItem>
+                        <SelectItem value="gcp">Google Cloud Platform (GCP)</SelectItem>
+                        <SelectItem value="oci">Oracle Cloud Infrastructure (OCI)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-credentials">Credentials (JSON)</Label>
+                  <Textarea
+                    id="edit-credentials"
+                    value={editForm.credentials}
+                    onChange={(e) => setEditForm({ ...editForm, credentials: e.target.value })}
+                    placeholder={getCredentialTemplate(editForm.provider)}
+                    rows={8}
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={cancelEdit}
+                    disabled={updateMutation.isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleUpdate}
+                    disabled={updateMutation.isPending}
+                  >
+                    {updateMutation.isPending ? "Updating..." : "Update Credential"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="add">

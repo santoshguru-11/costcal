@@ -147,6 +147,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/credentials/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { name, provider, encryptedCredentials } = req.body;
+      
+      const updated = await storage.updateCloudCredential(req.params.id, {
+        name,
+        provider,
+        encryptedCredentials
+      });
+      
+      if (!updated) {
+        return res.status(404).json({ message: "Credential not found" });
+      }
+      
+      res.json({ message: "Credential updated successfully" });
+    } catch (error) {
+      console.error("Update credential error:", error);
+      res.status(500).json({ message: "Failed to update credential" });
+    }
+  });
+
   app.delete("/api/credentials/:id", isAuthenticated, async (req, res) => {
     try {
       const deleted = await storage.deleteCloudCredential(req.params.id);
