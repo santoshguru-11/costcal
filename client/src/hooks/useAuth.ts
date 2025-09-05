@@ -3,9 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 export function useAuth() {
   const queryClient = useQueryClient();
   
-  const { data: user, isLoading, refetch } = useQuery({
+  const { data: user, isLoading, refetch, error } = useQuery({
     queryKey: ["/api/auth/user"],
     retry: false,
+    onError: (error) => {
+      console.error("Auth query error:", error);
+    }
   });
 
   const logout = async () => {
