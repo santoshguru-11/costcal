@@ -144,6 +144,13 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async updateCredentialValidation(id: string, userId: string, isValidated: boolean): Promise<void> {
+    await db
+      .update(cloudCredentials)
+      .set({ isValidated })
+      .where(and(eq(cloudCredentials.id, id), eq(cloudCredentials.userId, userId)));
+  }
+
   async updateCloudCredential(id: string, updates: Partial<InsertCloudCredential>): Promise<CloudCredential | undefined> {
     const updateData = { ...updates };
     if (updates.encryptedCredentials) {

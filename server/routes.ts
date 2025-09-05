@@ -746,7 +746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Validate cloud credentials (protected)
   app.post("/api/inventory/validate-credentials", isAuthenticated, async (req, res) => {
     try {
-      const { provider, credentials } = req.body;
+      const { provider, credentials, credentialId } = req.body;
       
       // This is a basic validation - in production, you'd make a simple API call to verify
       let isValid = false;
@@ -773,9 +773,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } else {
             try {
               // Test actual OCI credentials by making an API call
+              console.log('Starting OCI credential validation...');
               const { OCIInventoryService } = await import('./services/oci-inventory.js');
+              console.log('OCIInventoryService imported successfully');
               const ociService = new OCIInventoryService(credentials);
+              console.log('OCIInventoryService instance created');
               isValid = await ociService.validateCredentials();
+              console.log('OCI validation result:', isValid);
               message = isValid ? "Oracle Cloud credentials are valid" : "Invalid Oracle Cloud credentials";
             } catch (error) {
               console.error('OCI credential validation error:', error);
@@ -787,6 +791,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         default:
           isValid = false;
           message = "Unsupported cloud provider";
+      }
+
+      // If validation is successful, update the credential status in the database
+      if (isValid && provider === 'oci') {
+        try {
+          const userId = req.user.id;
+          await storage.updateCredentialValidation(req.body.credentialId, userId, true);
+        } catch (updateError) {
+          console.error('Failed to update credential validation status:', updateError);
+          // Don't fail the validation if we can't update the status
+        }
       }
 
       res.json({

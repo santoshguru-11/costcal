@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { PlusIcon, TrashIcon, CheckCircleIcon, XCircleIcon, KeyIcon } from "lucide-react";
+import { PlusIcon, TrashIcon, CheckCircleIcon, XCircleIcon, KeyIcon, RefreshCw } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 
 interface CloudCredential {
@@ -35,6 +35,8 @@ export default function CloudCredentials() {
   const { data: credentials = [], isLoading } = useQuery<CloudCredential[]>({
     queryKey: ["/api/credentials"],
   });
+
+  const [isValidating, setIsValidating] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; provider: string; encryptedCredentials: string }) => {
@@ -115,6 +117,62 @@ export default function CloudCredentials() {
       provider: newCredential.provider,
       encryptedCredentials: newCredential.credentials,
     });
+  };
+
+  const validateCredential = async (credentialId: string) => {
+    setIsValidating(true);
+    try {
+      // First, get the credential details
+      const response = await fetch(`/api/credentials/${credentialId}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch credential details');
+      }
+      
+      const credentialData = await response.json();
+      
+      // Then validate the credentials
+      const validationResponse = await fetch('/api/inventory/validate-credentials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          provider: credentialData.provider,
+          credentials: credentialData.credentials,
+          credentialId: credentialId
+        })
+      });
+      
+      const validation = await validationResponse.json();
+      
+      if (validation.valid) {
+        toast({
+          title: "Success",
+          description: "Credentials validated successfully!",
+        });
+        // Refresh the credentials list
+        queryClient.invalidateQueries({ queryKey: ["/api/credentials"] });
+      } else {
+        toast({
+          title: "Validation Failed",
+          description: validation.message || "Invalid credentials",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Validation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to validate credentials",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   const getCredentialTemplate = (provider: string) => {
@@ -218,15 +276,29 @@ export default function CloudCredentials() {
                           )}
                         </Badge>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteMutation.mutate(credential.id)}
-                        disabled={deleteMutation.isPending}
-                        data-testid={`button-delete-${credential.id}`}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        {!credential.isValidated && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => validateCredential(credential.id)}
+                            disabled={isValidating}
+                            data-testid={`button-validate-${credential.id}`}
+                          >
+                            <RefreshCw className="h-4 w-4 mr-1" />
+                            Validate
+                          </Button>
+                        )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteMutation.mutate(credential.id)}
+                          disabled={deleteMutation.isPending}
+                          data-testid={`button-delete-${credential.id}`}
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
