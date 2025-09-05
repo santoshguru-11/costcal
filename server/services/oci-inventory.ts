@@ -626,53 +626,6 @@ export class OCIInventoryService {
     return summary;
   }
 
-  // Helper method to validate OCI credentials
-  async validateCredentials(): Promise<boolean> {
-    try {
-      console.log('OCI validation - starting validation...');
-      
-      // For now, just validate that we can create the authentication provider
-      // This is a basic check - in production you'd want to make an actual API call
-      if (!this.credentials.tenancyId || !this.credentials.userId || 
-          !this.credentials.fingerprint || !this.credentials.privateKey || 
-          !this.credentials.region) {
-        console.log('OCI validation - missing required fields');
-        return false;
-      }
-      
-      // Check if the private key format is valid
-      const privateKey = this.credentials.privateKey;
-      if (!privateKey.includes('BEGIN PRIVATE KEY') || !privateKey.includes('END PRIVATE KEY')) {
-        console.log('OCI validation - invalid private key format');
-        return false;
-      }
-      
-      // Check if the tenancy ID format is valid (should start with ocid1.tenancy)
-      if (!this.credentials.tenancyId.startsWith('ocid1.tenancy')) {
-        console.log('OCI validation - invalid tenancy ID format');
-        return false;
-      }
-      
-      // Check if the user ID format is valid (should start with ocid1.user)
-      if (!this.credentials.userId.startsWith('ocid1.user')) {
-        console.log('OCI validation - invalid user ID format');
-        return false;
-      }
-      
-      // Check if the fingerprint format is valid (should be 16 hex pairs)
-      const fingerprintRegex = /^[0-9a-f]{2}(:[0-9a-f]{2}){15}$/i;
-      if (!fingerprintRegex.test(this.credentials.fingerprint)) {
-        console.log('OCI validation - invalid fingerprint format');
-        return false;
-      }
-      
-      console.log('OCI validation - basic validation passed');
-      return true;
-    } catch (error) {
-      console.error('OCI credentials validation error:', error);
-      return false;
-    }
-  }
 
   private async discoverResourcesViaCLI(): Promise<OCIResource[]> {
     console.log('Using OCI CLI to discover resources...');

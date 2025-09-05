@@ -13,7 +13,6 @@ import {
   Settings, 
   ArrowRight, 
   CheckCircle,
-  AlertCircle,
   RefreshCw
 } from "lucide-react";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
@@ -70,15 +69,6 @@ export function InventoryPage() {
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
-  const validateCredentialsMutation = useMutation({
-    mutationFn: async ({ provider, credentials }: { provider: string; credentials: any }) => {
-      const response = await apiRequest('POST', '/api/inventory/validate-credentials', {
-        provider,
-        credentials
-      });
-      return await response.json();
-    }
-  });
 
   // Convert saved credentials to the format expected by inventory scanner
   const convertSavedCredentials = (savedCreds: SavedCredential[]): CloudCredential[] => {
@@ -97,47 +87,16 @@ export function InventoryPage() {
       const convertedCredentials = convertSavedCredentials(savedCredentials);
       setCredentials(convertedCredentials);
       
-      // Validate credentials that aren't already validated
-      const validateCredentials = async () => {
-        const validationPromises = convertedCredentials
-          .filter(c => !c.validated)
-          .map(async (cred) => {
-            try {
-              // Load the actual credentials from server
-              const response = await fetch(`/api/credentials/${cred.id}`, {
-                credentials: 'include'
-              });
-              if (response.ok) {
-                const credentialData = await response.json();
-                const validation = await validateCredentialsMutation.mutateAsync({
-                  provider: cred.provider,
-                  credentials: credentialData.credentials
-                });
-                return { ...cred, validated: validation.valid };
-              }
-            } catch (error) {
-              console.error(`Failed to validate ${cred.provider} credentials:`, error);
-            }
-            return cred;
-          });
-
-        const validatedCredentials = await Promise.all(validationPromises);
-        setCredentials(validatedCredentials);
-        
-        // If we have validated credentials, auto-advance to scan tab
-        const validatedCount = validatedCredentials.filter(c => c.validated).length;
-        if (validatedCount > 0) {
-          setActiveTab('scan');
-          toast({
-            title: "Credentials Loaded",
-            description: `Found ${validatedCount} validated cloud credential${validatedCount !== 1 ? 's' : ''}. Ready to scan!`,
-          });
-        }
-      };
-
-      validateCredentials();
+      // Auto-advance to scan tab if we have credentials
+      if (convertedCredentials.length > 0) {
+        setActiveTab('scan');
+        toast({
+          title: "Credentials Loaded",
+          description: `Found ${convertedCredentials.length} cloud credential${convertedCredentials.length !== 1 ? 's' : ''}. Ready to scan!`,
+        });
+      }
     }
-  }, [savedCredentials, credentials.length, toast, validateCredentialsMutation]);
+  }, [savedCredentials, credentials.length, toast]);
 
   const handleCredentialsChange = (newCredentials: CloudCredential[]) => {
     setCredentials(newCredentials);
@@ -161,7 +120,6 @@ export function InventoryPage() {
     setLocation('/calculator');
   };
 
-  const validCredentials = credentials.filter(c => c.validated);
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
@@ -245,16 +203,15 @@ export function InventoryPage() {
                   <div className="space-y-4">
                     <div className="flex flex-wrap gap-2">
                       {savedCredentials.map(cred => (
-                        <Badge key={cred.id} variant={cred.isValidated ? "default" : "secondary"} className="capitalize">
+                        <Badge key={cred.id} variant="default" className="capitalize">
                           {cred.provider} - {cred.name}
-                          {cred.isValidated && <CheckCircle className="h-3 w-3 ml-1" />}
                         </Badge>
                       ))}
                     </div>
                     
                     <div className="flex items-center justify-between">
                       <div className="text-sm text-muted-foreground">
-                        {validCredentials.length} of {credentials.length} credentials are validated and ready for scanning.
+                        {credentials.length} credential{credentials.length !== 1 ? 's' : ''} ready for scanning.
                       </div>
                       <div className="flex gap-2">
                         <Button 
@@ -267,7 +224,7 @@ export function InventoryPage() {
                         </Button>
                         <Button 
                           onClick={() => setActiveTab('scan')}
-                          disabled={validCredentials.length === 0}
+                          disabled={credentials.length === 0}
                           data-testid="button-proceed-to-scan"
                         >
                           Start Scanning
@@ -275,15 +232,6 @@ export function InventoryPage() {
                         </Button>
                       </div>
                     </div>
-                    
-                    {validCredentials.length === 0 && credentials.length > 0 && (
-                      <Alert className="mt-4">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          Your credentials need to be validated before scanning. Please check your credential details and try refreshing.
-                        </AlertDescription>
-                      </Alert>
-                    )}
                   </div>
                 </CardContent>
               </Card>
