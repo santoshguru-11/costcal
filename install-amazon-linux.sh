@@ -58,7 +58,9 @@ sudo dnf install -y postgresql15-server postgresql15 postgresql15-contrib
 
 # Initialize and start PostgreSQL
 print_status "Initializing PostgreSQL database..."
-sudo /usr/pgsql-15/bin/postgresql-15-setup initdb
+sudo /usr/pgsql-15/bin/postgresql-15-setup initdb || \
+sudo postgresql-setup --initdb || \
+sudo -u postgres /usr/pgsql-15/bin/initdb -D /var/lib/pgsql/15/data
 sudo systemctl enable postgresql-15
 sudo systemctl start postgresql-15
 
