@@ -35,6 +35,7 @@ interface UnifiedResource {
   location: string;
   tags?: Record<string, string>;
   state: string;
+  compartmentName?: string;
   costDetails?: {
     instanceType?: string;
     size?: string;
@@ -84,6 +85,7 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
   const [scanProgress, setScanProgress] = useState(0);
   const [currentProvider, setCurrentProvider] = useState<string>('');
   const [automaticCostAnalysis, setAutomaticCostAnalysis] = useState<any>(null);
+  const [selectedProvider, setSelectedProvider] = useState<string>('all');
 
   const scanMutation = useMutation({
     mutationFn: async () => {
@@ -130,7 +132,12 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
         setCurrentProvider('Finalizing scan and calculating costs...');
       }, (selectedProviders.length + 1) * 1000);
 
-      const response = await apiRequest('POST', '/api/inventory/scan', scanRequest);
+      // Add provider filter to the API request
+      const url = selectedProvider !== 'all' 
+        ? `/api/inventory/scan?provider=${selectedProvider}`
+        : '/api/inventory/scan';
+      
+      const response = await apiRequest('POST', url, scanRequest);
       const result = await response.json();
 
       if (!result.success) {
@@ -243,25 +250,52 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
             </Alert>
           )}
 
-          <div className="flex gap-3">
-            <Button
-              onClick={() => scanMutation.mutate()}
-              disabled={scanMutation.isPending}
-              className="flex-1"
-              data-testid="button-start-scan"
-            >
-              {scanMutation.isPending ? (
-                <>
-                  <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  Scanning...
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4 mr-2" />
-                  Start Inventory Scan
-                </>
-              )}
-            </Button>
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Filter by Cloud Provider (Optional)</label>
+                <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder="Select provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Providers</SelectItem>
+                    {credentials.map(cred => (
+                      <SelectItem key={cred.id} value={cred.provider}>
+                        <div className="flex items-center gap-2">
+                          <Cloud className="h-4 w-4" />
+                          {cred.provider.toUpperCase()}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                onClick={() => scanMutation.mutate()}
+                disabled={scanMutation.isPending}
+                className="w-full sm:w-auto"
+                data-testid="button-start-scan"
+              >
+                {scanMutation.isPending ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                    Scanning...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4 mr-2" />
+                    Start Inventory Scan
+                  </>
+                )}
+              </Button>
+            </div>
+            {selectedProvider !== 'all' && (
+              <div className="text-sm text-muted-foreground">
+                <Cloud className="h-4 w-4 inline mr-1" />
+                Will scan only {selectedProvider.toUpperCase()} resources
+              </div>
+            )}
           </div>
 
           {scanMutation.isSuccess && scanMutation.data && (
