@@ -6,6 +6,7 @@ import { infrastructureRequirementsSchema, insertCloudCredentialSchema, insertIn
 import { CloudInventoryService, type InventoryScanRequest } from "./services/inventory-service.js";
 import { TerraformStateParser } from "./services/terraform-parser.js";
 import { setupAuth, isAuthenticated } from "./auth.js";
+import { decryptSync } from "./encryption.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const costCalculator = new ComprehensiveCostCalculator();
@@ -182,14 +183,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get available cloud providers for filtering
+  app.get("/api/inventory/providers", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const credentials = await storage.getUserCloudCredentials(userId);
+      const providers = [...new Set(credentials.map(cred => cred.provider))];
+      res.json({ providers });
+    } catch (error) {
+      console.error("Get providers error:", error);
+      res.status(500).json({ message: "Failed to get providers" });
+    }
+  });
+
   // Inventory scanning endpoints (protected)
   app.post("/api/inventory/scan", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const scanRequest: InventoryScanRequest = req.body;
+      const { provider: filterProvider } = req.query; // Optional provider filter
       const startTime = Date.now();
       
-      const inventory = await inventoryService.scanMultipleProviders(scanRequest);
+      // Load full credentials from database for each credential ID
+      const credentialsWithData = await Promise.all(
+        scanRequest.credentials.map(async (cred) => {
+          const fullCredential = await storage.getCloudCredential(cred.id, userId);
+          if (!fullCredential) {
+            throw new Error(`Credential ${cred.id} not found`);
+          }
+          return {
+            id: fullCredential.id,
+            provider: fullCredential.provider,
+            name: fullCredential.name,
+            credentials: JSON.parse(fullCredential.encryptedCredentials) // Parse the already decrypted JSON string
+          };
+        })
+      );
+      
+      // Filter credentials by provider if specified
+      let filteredCredentials = credentialsWithData;
+      if (filterProvider) {
+        filteredCredentials = credentialsWithData.filter(cred => cred.provider === filterProvider);
+        if (filteredCredentials.length === 0) {
+          return res.status(400).json({ 
+            success: false, 
+            message: `No credentials found for provider: ${filterProvider}` 
+          });
+        }
+      }
+      
+      // Update scan request with filtered credentials
+      const updatedScanRequest = {
+        ...scanRequest,
+        credentials: filteredCredentials
+      };
+      
+      const inventory = await inventoryService.scanMultipleProviders(updatedScanRequest);
       const scanDuration = Date.now() - startTime;
       
       // Save inventory scan to database
@@ -361,81 +410,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Debug endpoint for OCI connectivity
-  app.post("/api/debug/oci", isAuthenticated, async (req: any, res) => {
-    try {
-      const { credentials } = req.body;
-      
-      if (!credentials || credentials.provider !== 'oci') {
-        return res.status(400).json({ error: 'Invalid OCI credentials format' });
-      }
-
-      const { OCIInventoryService } = await import('./services/oci-inventory.js');
-      const ociService = new OCIInventoryService(credentials.credentials);
-      
-      // Test basic connectivity
-      const isValid = await ociService.validateCredentials();
-      
-      if (!isValid) {
-        return res.status(400).json({ error: 'Invalid OCI credentials' });
-      }
-
-      // Try to get user info
-      const identity = await import('oci-identity');
-      const { common } = await import('oci-sdk');
-      
-      const provider = new common.SimpleAuthenticationDetailsProvider(
-        credentials.credentials.tenancyId,
-        credentials.credentials.userId,
-        credentials.credentials.fingerprint,
-        Buffer.from(credentials.credentials.privateKey, 'utf8'),
-        undefined,
-        credentials.credentials.region
-      );
-      
-      const identityClient = new identity.IdentityClient({ 
-        authenticationDetailsProvider: provider
-      });
-      
-      // Get user info
-      const getUserRequest = {
-        userId: credentials.credentials.userId
-      };
-      
-      const userResponse = await identityClient.getUser(getUserRequest);
-      
-      // Get compartments
-      const listCompartmentsRequest = {
-        compartmentId: credentials.credentials.tenancyId,
-        compartmentIdInSubtree: true,
-        accessLevel: identity.models.ListCompartmentsRequest.AccessLevel.Accessible
-      };
-      
-      const compartmentsResponse = await identityClient.listCompartments(listCompartmentsRequest);
-      
-      res.json({
-        success: true,
-        user: {
-          name: userResponse.user?.name,
-          email: userResponse.user?.email,
-          state: userResponse.user?.lifecycleState
-        },
-        compartments: compartmentsResponse.items.map(c => ({
-          id: c.id,
-          name: c.name,
-          state: c.lifecycleState
-        })),
-        region: credentials.credentials.region
-      });
-    } catch (error) {
-      console.error('OCI debug error:', error);
-      res.status(500).json({ 
-        error: 'OCI debug failed', 
-        details: error.message,
-        stack: error.stack 
-      });
-    }
-  });
 
   // Get user inventory scans
   app.get("/api/inventory/scans", isAuthenticated, async (req: any, res) => {

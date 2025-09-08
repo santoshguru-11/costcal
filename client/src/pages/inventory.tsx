@@ -78,7 +78,7 @@ export function InventoryPage() {
       id: cred.id,
       provider: cred.provider as 'aws' | 'azure' | 'gcp' | 'oci',
       name: cred.name,
-      credentials: {}, // We'll load the actual credentials when needed
+      credentials: {}, // Will be loaded when needed for scanning
       validated: cred.isValidated
     }));
   };

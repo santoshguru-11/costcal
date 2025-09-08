@@ -1,41 +1,8 @@
 import { AWSInventoryService, AWSCredentials, AWSInventory } from './aws-inventory.js';
 import { AzureInventoryService, AzureCredentials, AzureInventory } from './azure-inventory.js';
 import { GCPInventoryService, GCPCredentials, GCPInventory } from './gcp-inventory.js';
-import { OCIInventoryService } from './oci-inventory.js';
+import { OCIInventoryService, OCICredentials, OCIInventory } from './oci-inventory.js';
 
-export interface OCICredentials {
-  tenancyId: string;
-  userId: string;
-  fingerprint: string;
-  privateKey: string;
-  region: string;
-}
-
-export interface OCIInventory {
-  resources: OCIResource[];
-  summary: {
-    totalResources: number;
-    byService: Record<string, number>;
-    byRegion: Record<string, number>;
-    byState: Record<string, number>;
-  };
-  metadata: {
-    scanTime: string;
-    region: string;
-    provider: string;
-  };
-}
-
-export interface OCIResource {
-  id: string;
-  name: string;
-  type: string;
-  service: string;
-  region: string;
-  state: string;
-  compartmentName: string;
-  costDetails: any;
-}
 
 export interface CloudCredentials {
   provider: 'aws' | 'azure' | 'gcp' | 'oci';
@@ -202,6 +169,12 @@ export class CloudInventoryService {
     inventory: AWSInventory | AzureInventory | GCPInventory | OCIInventory, 
     provider: string
   ): UnifiedResource[] {
+    // Handle cases where inventory might be undefined or malformed
+    if (!inventory || !inventory.resources || !Array.isArray(inventory.resources)) {
+      console.warn(`Invalid inventory format for ${provider}:`, inventory);
+      return [];
+    }
+    
     return inventory.resources.map(resource => ({
       ...resource,
       provider,
@@ -251,7 +224,7 @@ export class CloudInventoryService {
 
     // Aggregate compute resources
     const computeResources = inventory.resources.filter(r => 
-      r.service === 'EC2' || r.service === 'Compute Engine' || r.service.includes('Virtual') || r.service === 'OCI Compute'
+      r.service === 'EC2' || r.service === 'Compute Engine' || (r.service && r.service.includes('Virtual')) || r.service === 'OCI Compute'
     );
 
     computeResources.forEach(resource => {
@@ -279,7 +252,7 @@ export class CloudInventoryService {
 
     // Aggregate database resources
     const dbResources = inventory.resources.filter(r => 
-      r.service === 'RDS' || r.service === 'Cloud SQL' || r.type.includes('SQL') || r.service === 'OCI Database'
+      r.service === 'RDS' || r.service === 'Cloud SQL' || (r.type && r.type.includes('SQL')) || r.service === 'OCI Database'
     );
 
     dbResources.forEach(resource => {

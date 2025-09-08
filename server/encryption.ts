@@ -39,7 +39,8 @@ export async function decrypt(encryptedText: string): Promise<string> {
 
 // Synchronous versions for backward compatibility (less secure)
 export function encryptSync(text: string): string {
-  const key = Buffer.from(ENCRYPTION_KEY).subarray(0, 32);
+  // Use the same key derivation as the async version for consistency
+  const key = Buffer.from(ENCRYPTION_KEY.padEnd(32, '0')).subarray(0, 32);
   const iv = randomBytes(16);
   const cipher = createCipheriv(algorithm, key, iv);
   
@@ -50,7 +51,8 @@ export function encryptSync(text: string): string {
 }
 
 export function decryptSync(encryptedText: string): string {
-  const key = Buffer.from(ENCRYPTION_KEY).subarray(0, 32);
+  // Use the same key derivation as the async version for consistency
+  const key = Buffer.from(ENCRYPTION_KEY.padEnd(32, '0')).subarray(0, 32);
   const [ivHex, encrypted] = encryptedText.split(':');
   const iv = Buffer.from(ivHex, 'hex');
   

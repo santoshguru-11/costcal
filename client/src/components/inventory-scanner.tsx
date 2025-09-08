@@ -35,7 +35,6 @@ interface UnifiedResource {
   location: string;
   tags?: Record<string, string>;
   state: string;
-  compartmentName?: string; // For OCI resources
   costDetails?: {
     instanceType?: string;
     size?: string;
@@ -63,7 +62,8 @@ interface InventoryScannerProps {
   onInventoryScanned: (inventory: UnifiedInventory) => void;
 }
 
-const getServiceIcon = (service: string) => {
+const getServiceIcon = (service: string | undefined) => {
+  if (!service) return <Cloud className="h-4 w-4" />;
   const lowerService = service.toLowerCase();
   if (lowerService.includes('compute') || lowerService.includes('ec2')) return <Server className="h-4 w-4" />;
   if (lowerService.includes('database') || lowerService.includes('sql') || lowerService.includes('rds')) return <Database className="h-4 w-4" />;
@@ -71,7 +71,8 @@ const getServiceIcon = (service: string) => {
   return <Cloud className="h-4 w-4" />;
 };
 
-const getStateColor = (state: string) => {
+const getStateColor = (state: string | undefined) => {
+  if (!state) return 'bg-gray-500';
   const lowerState = state.toLowerCase();
   if (lowerState.includes('running') || lowerState.includes('active')) return 'bg-green-500';
   if (lowerState.includes('stopped') || lowerState.includes('terminated')) return 'bg-red-500';
@@ -88,34 +89,13 @@ export function InventoryScanner({ credentials, onInventoryScanned }: InventoryS
     mutationFn: async () => {
       console.log('InventoryScanner - Selected credentials:', credentials);
       
-      // Load actual credentials from server for each provider
-      const credentialsWithData = await Promise.all(
-        credentials.map(async (cred) => {
-          try {
-            const response = await fetch(`/api/credentials/${cred.id}`, {
-              credentials: 'include'
-            });
-            if (response.ok) {
-              const credentialData = await response.json();
-              return {
-                provider: cred.provider,
-                credentials: credentialData.credentials
-              };
-            }
-          } catch (error) {
-            console.error(`Failed to load credentials for ${cred.provider}:`, error);
-          }
-          return {
-            provider: cred.provider,
-            credentials: cred.credentials
-          };
-        })
-      );
-
-      console.log('InventoryScanner - Credentials with data:', credentialsWithData);
-
+      // Send credential IDs to the backend - the backend will load the full credentials
       const scanRequest = {
-        credentials: credentialsWithData
+        credentials: credentials.map(cred => ({
+          id: cred.id,
+          provider: cred.provider,
+          name: cred.name
+        }))
       };
 
       // Get list of selected providers for progress updates

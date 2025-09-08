@@ -40,6 +40,7 @@ const ociCredentialsSchema = z.object({
   region: z.string().min(1, "Region is required"),
 });
 
+
 export interface CloudCredential {
   id: string;
   provider: 'aws' | 'azure' | 'gcp' | 'oci';
@@ -66,6 +67,7 @@ const OCI_REGIONS = [
   "ap-tokyo-1", "ap-osaka-1", "ap-mumbai-1", "ap-seoul-1",
   "ap-sydney-1", "ca-toronto-1", "sa-saopaulo-1", "ap-singapore-1"
 ];
+
 
 export function CloudCredentialsForm({ 
   credentials, 
@@ -116,36 +118,67 @@ export function CloudCredentialsForm({
     },
   });
 
+
   const addCredential = async (provider: 'aws' | 'azure' | 'gcp' | 'oci', data: any) => {
     const credentialId = `${provider}-${Date.now()}`;
-    const newCredential: CloudCredential = {
-      id: credentialId,
-      provider,
-      name: `${provider.toUpperCase()} Account`,
-      credentials: data,
-    };
-
-    // Validate credentials
+    
+    // Validate credentials first
     setValidationStatus(prev => ({ ...prev, [credentialId]: { loading: true } }));
     
     try {
       const validation = await onValidateCredentials(provider, data);
-      newCredential.validated = validation.valid;
-      setValidationStatus(prev => ({ 
-        ...prev, 
-        [credentialId]: { loading: false, result: validation } 
-      }));
+      
+      if (validation.valid) {
+        // Save to database
+        const response = await fetch('/api/credentials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            provider,
+            name: `${provider.toUpperCase()} Account`,
+            encryptedCredentials: JSON.stringify(data), // Convert to JSON string for encryption
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save credentials');
+        }
+
+        const savedCredential = await response.json();
+        
+        const newCredential: CloudCredential = {
+          id: savedCredential.id,
+          provider,
+          name: savedCredential.name,
+          credentials: data,
+          validated: true,
+        };
+
+        setValidationStatus(prev => ({ 
+          ...prev, 
+          [credentialId]: { loading: false, result: validation } 
+        }));
+
+        onCredentialsChange([...credentials, newCredential]);
+      } else {
+        setValidationStatus(prev => ({ 
+          ...prev, 
+          [credentialId]: { loading: false, result: validation } 
+        }));
+      }
     } catch (error) {
+      console.error('Error saving credentials:', error);
       setValidationStatus(prev => ({ 
         ...prev, 
         [credentialId]: { 
           loading: false, 
-          result: { valid: false, message: "Validation failed" } 
+          result: { valid: false, message: "Failed to save credentials" } 
         } 
       }));
     }
-
-    onCredentialsChange([...credentials, newCredential]);
     
     // Reset form
     if (provider === 'aws') awsForm.reset();
@@ -639,6 +672,7 @@ export function CloudCredentialsForm({
                 </form>
               </Form>
             </TabsContent>
+
           </Tabs>
         </CardContent>
       </Card>
