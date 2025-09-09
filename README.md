@@ -1,223 +1,464 @@
-# Cloud Cost Optimizer
+# 🌐 Cloud Cost Optimizer
 
-A comprehensive cloud cost optimization platform that analyzes infrastructure across multiple cloud providers, provides cost comparisons, and generates detailed reports. Built with React, TypeScript, Node.js, and PostgreSQL.
+A comprehensive multi-cloud cost optimization and inventory management platform that helps organizations discover, analyze, and optimize their cloud resources across AWS, Azure, GCP, and Oracle Cloud Infrastructure (OCI).
+
+![Cloud Cost Optimizer](https://img.shields.io/badge/Cloud-Cost%20Optimizer-blue?style=for-the-badge&logo=cloud)
+![Multi-Cloud](https://img.shields.io/badge/Multi--Cloud-AWS%20%7C%20Azure%20%7C%20GCP%20%7C%20OCI-green?style=for-the-badge)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 
 ## 🚀 Features
 
-### 📊 Multi-Cloud Cost Analysis
-- **AWS, Azure, GCP, Oracle Cloud** support
-- Real-time cost calculations and comparisons
-- Comprehensive pricing data for 200+ services
-- Multi-region cost analysis
+### 🔍 **Multi-Cloud Inventory Discovery**
+- **AWS**: EC2 instances, RDS databases, S3 buckets, Lambda functions, VPCs, and more
+- **Azure**: Virtual machines, SQL databases, storage accounts, app services, and more
+- **GCP**: Compute Engine, Cloud SQL, Cloud Storage, Cloud Functions, and more
+- **OCI**: Compute instances, autonomous databases, block volumes, load balancers, VCNs, and more
 
-### 🔍 Infrastructure Discovery
-- **Terraform State File Parsing** - Upload `.tfstate` files for instant analysis
-- **OCI CLI Integration** - Real-time Oracle Cloud resource discovery
-- **Cloud Provider APIs** - Direct integration with cloud services
-- **Resource Categorization** - Automatic service classification
+### 💰 **Cost Analysis & Optimization**
+- Real-time cost calculations across all cloud providers
+- Side-by-side cost comparisons
+- Optimization recommendations
+- Budget tracking and alerts
+- Cost forecasting
 
-### 📋 Inventory Management
-- **Resource Filtering** - Filter by service, provider, region
-- **Search Functionality** - Find resources by name, type, or service
-- **Visual Resource Table** - Detailed resource information with icons
-- **Compartment/Resource Group** tracking
+### 📊 **Comprehensive Reporting**
+- Interactive dashboards
+- Resource utilization analytics
+- Cost trend analysis
+- Export capabilities (PDF, CSV, JSON)
 
-### 📄 Reporting & Export
-- **PDF Report Generation** - Professional cost analysis reports
-- **CSV Export** - Data export for further analysis
-- **Visual Charts** - Cost breakdown charts and graphs
-- **Multi-page PDF** support with automatic pagination
+### 🔐 **Security & Compliance**
+- Encrypted credential storage
+- Role-based access control
+- Audit logging
+- GDPR compliant
 
-### 🔐 Authentication & Security
-- **Email/Password Authentication** - Secure user management
-- **Session Management** - Persistent login sessions
-- **Protected Routes** - Secure API endpoints
-- **Credential Encryption** - Secure cloud credential storage
+## 🏗️ Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React Frontend│    │  Node.js API    │    │   PostgreSQL    │
+│                 │    │                 │    │                 │
+│  - Dashboard    │◄──►│  - REST API     │◄──►│  - User Data    │
+│  - Inventory    │    │  - Auth         │    │  - Credentials  │
+│  - Cost Analysis│    │  - Cloud APIs   │    │  - Scan Results │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │  Cloud Providers│
+                       │                 │
+                       │  AWS  Azure GCP │
+                       │  OCI  (Others)  │
+                       └─────────────────┘
+```
 
 ## 🛠️ Technology Stack
 
-### Frontend
+### **Frontend**
 - **React 18** with TypeScript
 - **Vite** for fast development and building
+- **TanStack Query** for data fetching and caching
 - **Tailwind CSS** for styling
-- **Lucide React** for icons
-- **React Query** for data fetching
-- **Wouter** for routing
+- **Shadcn/ui** for UI components
+- **Recharts** for data visualization
 
-### Backend
-- **Node.js** with Express.js
-- **TypeScript** for type safety
-- **PostgreSQL** with Drizzle ORM
-- **Passport.js** for authentication
-- **Bcrypt** for password hashing
+### **Backend**
+- **Node.js** with TypeScript
+- **Express.js** for REST API
+- **PostgreSQL** for data persistence
+- **Drizzle ORM** for database operations
+- **bcrypt** for password hashing
+- **express-session** for session management
 
-### Cloud Integrations
-- **AWS SDK v2** for AWS services
-- **Azure SDK** for Azure services
-- **Google Cloud SDK** for GCP services
-- **OCI SDK** for Oracle Cloud services
-- **OCI CLI** for resource discovery
+### **Cloud Integrations**
+- **AWS SDK** for JavaScript
+- **Azure SDK** for Node.js
+- **Google Cloud SDK** for Node.js
+- **Oracle Cloud SDK** for Python
 
-### PDF Generation
-- **jsPDF** for PDF creation
-- **html2canvas** for HTML to image conversion
+## 📋 Prerequisites
 
-## 📦 Installation
+- **Node.js** 18+ 
+- **Python** 3.8+ (for OCI integration)
+- **PostgreSQL** 12+
+- **Git**
 
-### Prerequisites
-- Node.js 18+ 
-- PostgreSQL 14+
-- OCI CLI (for Oracle Cloud integration)
+## 🚀 Quick Start
 
-### Setup
+### 1. Clone the Repository
 
-1. **Clone the repository**
+```bash
+git clone https://github.com/santoshguru-11/costcal.git
+cd costcal
+```
+
+### 2. Install Dependencies
+
+```bash
+# Install Node.js dependencies
+npm install
+
+# Install Python dependencies for OCI
+pip install -r requirements.txt
+```
+
+### 3. Database Setup
+
+```bash
+# Option 1: Automated setup
+chmod +x setup_database.sh
+./setup_database.sh
+
+# Option 2: Manual setup
+createdb cloud_cost_optimizer
+psql -d cloud_cost_optimizer -f database_setup.sql
+```
+
+### 4. Environment Configuration
+
+Create a `.env` file in the root directory:
+
+```env
+# Database Configuration
+DATABASE_URL=postgresql://cloud_cost_user:1101@localhost/cloud_cost_optimizer
+
+# Session Secret
+SESSION_SECRET=your-super-secret-session-key
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Cloud Provider API Keys (Optional - can be added via UI)
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AZURE_CLIENT_ID=your-azure-client-id
+AZURE_CLIENT_SECRET=your-azure-client-secret
+GCP_PROJECT_ID=your-gcp-project-id
+```
+
+### 5. Start the Application
+
+```bash
+# Development mode
+npm run dev
+
+# Production mode
+npm run build
+npm start
+```
+
+### 6. Access the Application
+
+Open your browser and navigate to `http://localhost:3000`
+
+**Default Login Credentials:**
+- Email: `darbhasantosh11@gmail.com`
+- Password: `1101`
+
+## 🔧 Configuration
+
+### Cloud Provider Setup
+
+#### AWS Configuration
+1. Create an IAM user with appropriate permissions
+2. Generate access keys
+3. Add credentials via the UI or environment variables
+
+**Required IAM Permissions:**
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:Describe*",
+                "rds:Describe*",
+                "s3:ListAllMyBuckets",
+                "s3:GetBucketLocation",
+                "lambda:ListFunctions",
+                "pricing:GetProducts"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+#### Azure Configuration
+1. Create an Azure AD application
+2. Generate client ID and secret
+3. Assign appropriate roles to the application
+
+**Required Azure Roles:**
+- Reader
+- Cost Management Reader
+- Billing Reader
+
+#### GCP Configuration
+1. Create a service account
+2. Download the JSON key file
+3. Enable required APIs
+
+**Required GCP APIs:**
+- Compute Engine API
+- Cloud SQL API
+- Cloud Storage API
+- Cloud Billing API
+
+#### OCI Configuration
+1. Create an API key for your user
+2. Download the private key
+3. Note the fingerprint and OCIDs
+
+**Required OCI Policies:**
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "core:instance:read",
+                "core:volume:read",
+                "core:vcn:read",
+                "core:subnet:read",
+                "object:read",
+                "database:read"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+## 📖 API Documentation
+
+### Authentication Endpoints
+
+#### POST `/api/auth/register`
+Register a new user account.
+
+**Request Body:**
+```json
+{
+    "email": "user@example.com",
+    "password": "securepassword",
+    "firstName": "John",
+    "lastName": "Doe"
+}
+```
+
+#### POST `/api/auth/login`
+Authenticate user and create session.
+
+**Request Body:**
+```json
+{
+    "email": "user@example.com",
+    "password": "securepassword"
+}
+```
+
+### Cloud Credentials Endpoints
+
+#### POST `/api/credentials`
+Add cloud provider credentials.
+
+**Request Body:**
+```json
+{
+    "provider": "aws",
+    "name": "Production AWS",
+    "credentials": {
+        "accessKeyId": "AKIA...",
+        "secretAccessKey": "...",
+        "region": "us-east-1"
+    }
+}
+```
+
+#### GET `/api/credentials`
+Retrieve all cloud credentials for the authenticated user.
+
+### Inventory Endpoints
+
+#### POST `/api/inventory/scan`
+Start a cloud inventory scan.
+
+**Request Body:**
+```json
+{
+    "providers": ["aws", "azure", "gcp", "oci"],
+    "credentials": [
+        {
+            "provider": "aws",
+            "credentials": { /* AWS credentials */ }
+        }
+    ]
+}
+```
+
+#### GET `/api/inventory/scans`
+Retrieve scan history for the authenticated user.
+
+### Cost Analysis Endpoints
+
+#### POST `/api/cost/analyze`
+Perform cost analysis based on requirements.
+
+**Request Body:**
+```json
+{
+    "requirements": {
+        "compute": {
+            "vcpus": 4,
+            "memory": 8,
+            "storage": 100
+        },
+        "database": {
+            "type": "managed",
+            "size": "medium"
+        },
+        "region": "us-east-1"
+    }
+}
+```
+
+## 🗄️ Database Schema
+
+### Tables Overview
+
+| Table | Description | Key Fields |
+|-------|-------------|------------|
+| `users` | User accounts | id, email, password, first_name, last_name |
+| `sessions` | User sessions | sid, sess, expire |
+| `cloud_credentials` | Encrypted cloud credentials | id, user_id, provider, encrypted_credentials |
+| `inventory_scans` | Scan results | id, user_id, scan_data, scan_date |
+| `cost_analyses` | Cost analysis results | id, user_id, requirements, results |
+
+### Relationships
+
+```mermaid
+erDiagram
+    users ||--o{ cloud_credentials : owns
+    users ||--o{ inventory_scans : performs
+    users ||--o{ cost_analyses : requests
+    inventory_scans ||--o{ cost_analyses : used_in
+    users ||--o{ sessions : has
+```
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm run test:unit
+npm run test:integration
+npm run test:e2e
+
+# Run database tests
+psql -d cloud_cost_optimizer -f test_database.sql
+```
+
+### Test Coverage
+
+```bash
+# Generate coverage report
+npm run test:coverage
+```
+
+## 🚀 Deployment
+
+### Docker Deployment
+
+```bash
+# Build Docker image
+docker build -t cloud-cost-optimizer .
+
+# Run with Docker Compose
+docker-compose up -d
+```
+
+### Production Deployment
+
+1. **Environment Setup**
    ```bash
-   git clone https://github.com/santoshguru-11/inventory_cost.git
-   cd inventory_cost
+   export NODE_ENV=production
+   export DATABASE_URL=postgresql://user:pass@host:port/db
+   export SESSION_SECRET=your-production-secret
    ```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Configure your `.env` file:
-   ```env
-   DATABASE_URL="postgresql://username:password@localhost:5432/cloud_cost_optimizer"
-   SESSION_SECRET="your-session-secret"
-   PORT=3000
-   ```
-
-4. **Set up the database**
-   ```bash
-   npm run db:push
-   ```
-
-5. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-6. **Build for production**
+2. **Build Application**
    ```bash
    npm run build
+   ```
+
+3. **Start Production Server**
+   ```bash
    npm start
    ```
 
-## 🎯 Usage
+### Cloud Deployment Options
 
-### 1. Authentication
-- Navigate to `/login` to create an account or sign in
-- Secure email/password authentication system
+- **AWS**: ECS, Lambda, EC2
+- **Azure**: App Service, Container Instances
+- **GCP**: Cloud Run, GKE, Compute Engine
+- **OCI**: Container Instances, OKE
 
-### 2. Cloud Credentials Setup
-- Go to `/credentials` to add your cloud provider credentials
-- Supports AWS, Azure, GCP, and Oracle Cloud
-- Credentials are encrypted and stored securely
+## 📊 Monitoring & Logging
 
-### 3. Terraform State Analysis
-- Navigate to `/terraform` to upload your `.tfstate` files
-- View parsed resources in a detailed table
-- Automatic cost analysis generation
-- Export results as PDF reports
+### Application Monitoring
 
-### 4. Inventory Scanning
-- Go to `/inventory` to scan your cloud resources
-- Real-time resource discovery
-- Filter and search through resources
-- Generate cost analysis from discovered resources
+- **Health Checks**: `/api/health`
+- **Metrics**: Prometheus-compatible endpoints
+- **Logging**: Structured JSON logging
 
-### 5. Cost Analysis
-- View detailed cost breakdowns across providers
-- Compare costs between different cloud providers
-- Generate PDF reports with charts and recommendations
-- Export data for further analysis
+### Database Monitoring
 
-## 🔧 API Endpoints
+- **Connection Pool**: Monitored via Drizzle ORM
+- **Query Performance**: PostgreSQL query analysis
+- **Backup**: Automated daily backups
 
-### Authentication
-- `POST /api/register` - User registration
-- `POST /api/login` - User login
-- `POST /api/logout` - User logout
-- `GET /api/auth/user` - Get current user
+## 🔒 Security
 
-### Terraform Analysis
-- `POST /api/terraform/parse` - Parse Terraform state files
-- `POST /api/inventory/analyze-costs` - Generate cost analysis
+### Data Protection
 
-### Inventory Management
-- `POST /api/inventory/scan` - Scan cloud resources
-- `POST /api/inventory/validate-credentials` - Validate cloud credentials
+- **Encryption at Rest**: Database encryption
+- **Encryption in Transit**: HTTPS/TLS
+- **Credential Encryption**: AES-256 encryption for cloud credentials
+- **Password Hashing**: bcrypt with salt rounds
 
-### Cost Analysis
-- `POST /api/calculate` - Calculate costs
-- `GET /api/analysis/:id` - Get analysis by ID
-- `GET /api/analyses` - Get user's analyses
+### Access Control
 
-## 📊 Supported Resource Types
-
-### AWS Resources
-- EC2 Instances, Auto Scaling Groups
-- S3 Buckets, EBS Volumes, EFS
-- RDS, DynamoDB, ElastiCache, Redshift
-- Load Balancers, VPC, Security Groups
-- Lambda Functions, ECS, EKS
-- CloudWatch, Route53, CloudFront
-
-### Azure Resources
-- Virtual Machines, Scale Sets
-- Storage Accounts, Managed Disks
-- SQL Databases, CosmosDB, Redis Cache
-- Load Balancers, VNets, Network Security Groups
-- Function Apps, Container Groups, AKS
-- Application Insights, DNS Zones
-
-### Google Cloud Resources
-- Compute Engine, Instance Groups
-- Cloud Storage, Persistent Disks
-- Cloud SQL, Firestore, Bigtable
-- Load Balancers, VPC, Firewalls
-- Cloud Functions, GKE, Cloud Run
-- Logging, DNS, Cloud CDN
-
-### Oracle Cloud Resources
-- Compute Instances, Instance Pools
-- Object Storage, Block Volumes
-- Autonomous Database, NoSQL
-- Load Balancers, VCN, Security Lists
-- Functions, OKE (Oracle Kubernetes Engine)
-- Logging, Monitoring, DNS
-
-## 🎨 Screenshots
-
-### Terraform State Analysis
-- Upload `.tfstate` files
-- View parsed resources in detailed table
-- Automatic cost analysis generation
-
-### Inventory Management
-- Real-time resource discovery
-- Service and search filtering
-- Visual resource categorization
-
-### Cost Analysis Reports
-- Multi-cloud cost comparisons
-- Detailed cost breakdowns
-- PDF report generation
+- **Session Management**: Secure session handling
+- **CSRF Protection**: Cross-site request forgery protection
+- **Input Validation**: Comprehensive input sanitization
+- **Rate Limiting**: API rate limiting
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow TypeScript best practices
+- Write comprehensive tests
+- Update documentation
+- Follow conventional commit messages
 
 ## 📝 License
 
@@ -225,34 +466,58 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-For support, email support@cloudcostoptimizer.com or create an issue in the GitHub repository.
+### Getting Help
 
-## 🔮 Roadmap
+- **Documentation**: Check this README and inline code comments
+- **Issues**: Create a GitHub issue for bugs or feature requests
+- **Discussions**: Use GitHub Discussions for questions
 
-- [ ] Kubernetes cost analysis
-- [ ] Reserved instance recommendations
-- [ ] Cost anomaly detection
-- [ ] Multi-account/tenant support
-- [ ] API rate limiting and optimization
-- [ ] Advanced cost forecasting
-- [ ] Integration with more cloud providers
+### Common Issues
 
-## 📈 Performance
+#### OCI Integration Issues
+- Ensure Python 3.8+ is installed
+- Verify OCI SDK is properly installed
+- Check credential format and permissions
 
-- **Fast Resource Discovery** - OCI CLI integration discovers 100+ resources in seconds
-- **Efficient Parsing** - Terraform state files parsed in milliseconds
-- **Optimized Queries** - Database queries optimized with Drizzle ORM
-- **Caching** - React Query provides intelligent caching
-- **Lazy Loading** - Components loaded on demand
+#### Database Connection Issues
+- Verify PostgreSQL is running
+- Check connection string format
+- Ensure database user has proper permissions
 
-## 🛡️ Security
+#### Cloud API Issues
+- Verify API credentials are correct
+- Check cloud provider service status
+- Review API rate limits and quotas
 
-- **Encrypted Credentials** - Cloud credentials encrypted at rest
-- **Secure Sessions** - HTTP-only cookies with secure flags
-- **Input Validation** - All inputs validated and sanitized
-- **SQL Injection Protection** - Drizzle ORM prevents SQL injection
-- **XSS Protection** - React's built-in XSS protection
+## 🗺️ Roadmap
+
+### Upcoming Features
+
+- [ ] **Multi-tenant Support**: Organization and team management
+- [ ] **Advanced Analytics**: Machine learning-powered insights
+- [ ] **Cost Optimization**: Automated resource right-sizing
+- [ ] **Compliance Reporting**: SOC2, GDPR compliance tools
+- [ ] **API Rate Limiting**: Smart API usage optimization
+- [ ] **Mobile App**: React Native mobile application
+- [ ] **Webhooks**: Real-time notifications and integrations
+- [ ] **Cost Alerts**: Budget threshold notifications
+
+### Version History
+
+- **v1.0.0** - Initial release with basic multi-cloud support
+- **v1.1.0** - Added OCI integration and improved UI
+- **v1.2.0** - Enhanced cost analysis and reporting
+- **v1.3.0** - Added automated database setup and testing
+
+## 🙏 Acknowledgments
+
+- **Oracle Cloud Infrastructure** for comprehensive Python SDK
+- **AWS, Azure, GCP** for their excellent cloud APIs
+- **Open Source Community** for amazing tools and libraries
+- **Contributors** who help improve this project
 
 ---
 
-**Built with ❤️ for cloud cost optimization**
+**Made with ❤️ for the cloud community**
+
+For more information, visit our [documentation site](https://github.com/santoshguru-11/costcal/wiki) or contact us at [darbhasantosh11@gmail.com](mailto:darbhasantosh11@gmail.com).
