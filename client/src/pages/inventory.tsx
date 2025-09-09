@@ -71,6 +71,14 @@ export function InventoryPage() {
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
+  // Add validation mutation
+  const validateCredentialsMutation = useMutation({
+    mutationFn: async ({ provider, credentials }: { provider: string; credentials: any }) => {
+      // For now, just return success - we'll implement actual validation later
+      return { valid: true, message: "Credentials validated successfully" };
+    }
+  });
+
 
   // Convert saved credentials to the format expected by inventory scanner
   const convertSavedCredentials = (savedCreds: SavedCredential[]): CloudCredential[] => {

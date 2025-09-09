@@ -2,16 +2,18 @@
 -- PostgreSQL DDL Script for complete database schema
 
 -- Create database (run this separately if needed)
-CREATE DATABASE cloud_cost_optimizer;
+-- CREATE DATABASE cloud_cost_optimizer;
 
 -- Connect to the database
-\c cloud_cost_optimizer;
+-- \c cloud_cost_optimizer;
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 -- Drop existing tables if they exist (be careful in production!)
+
 DROP TABLE IF EXISTS inventory_scans CASCADE;
 DROP TABLE IF EXISTS cloud_credentials CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
@@ -76,16 +78,16 @@ CREATE INDEX IF NOT EXISTS idx_inventory_scans_scan_date ON inventory_scans(scan
 CREATE INDEX IF NOT EXISTS idx_cost_analyses_user_id ON cost_analyses(user_id);
 CREATE INDEX IF NOT EXISTS idx_cost_analyses_created_at ON cost_analyses(created_at);
 
--- Create GIN indexes for JSONB columns
-CREATE INDEX IF NOT EXISTS idx_cloud_credentials_encrypted ON cloud_credentials USING GIN(encrypted_credentials);
-CREATE INDEX IF NOT EXISTS idx_inventory_scans_scan_data ON inventory_scans USING GIN(scan_data);
-CREATE INDEX IF NOT EXISTS idx_cost_analyses_requirements ON cost_analyses USING GIN(requirements);
-CREATE INDEX IF NOT EXISTS idx_cost_analyses_results ON cost_analyses USING GIN(results);
+-- Create GIN indexes for JSONB columns (using gin_trgm_ops for text search)
+CREATE INDEX IF NOT EXISTS idx_cloud_credentials_encrypted ON cloud_credentials USING GIN(encrypted_credentials gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_inventory_scans_scan_data ON inventory_scans USING GIN(scan_data gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_cost_analyses_requirements ON cost_analyses USING GIN(requirements gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_cost_analyses_results ON cost_analyses USING GIN(results gin_trgm_ops);
 
 -- Create indexes on specific JSONB fields for common queries
-CREATE INDEX IF NOT EXISTS idx_cost_analyses_currency ON cost_analyses USING GIN((requirements->'currency'));
-CREATE INDEX IF NOT EXISTS idx_cost_analyses_compute_vcpus ON cost_analyses USING GIN((requirements->'compute'->'vcpus'));
-CREATE INDEX IF NOT EXISTS idx_cost_analyses_cheapest_provider ON cost_analyses USING GIN((results->'cheapest'->'name'));
+CREATE INDEX IF NOT EXISTS idx_cost_analyses_currency ON cost_analyses USING GIN((requirements->'currency') gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_cost_analyses_compute_vcpus ON cost_analyses USING GIN((requirements->'compute'->'vcpus') gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_cost_analyses_cheapest_provider ON cost_analyses USING GIN((results->'cheapest'->'name') gin_trgm_ops);
 
 -- Add comments to tables and columns
 COMMENT ON TABLE users IS 'User accounts for the cloud cost optimizer application';
@@ -131,7 +133,7 @@ COMMENT ON COLUMN cost_analyses.created_at IS 'Timestamp when the analysis was c
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'cloud_cost_user') THEN
-        CREATE ROLE cloud_cost_user WITH LOGIN PASSWORD 'secure_password_123';
+        CREATE ROLE cloud_cost_user WITH LOGIN PASSWORD '1101';
     END IF;
 END
 $$;
@@ -141,7 +143,7 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO cloud_cost_user;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO cloud_cost_user;
 GRANT USAGE ON SCHEMA public TO cloud_cost_user;
 
--- Insert a sample user for testing (password: password123)
+-- Insert a sample user for testing (password: 1101)
 -- Note: In production, remove this and use proper user registration
 INSERT INTO users (id, email, password, first_name, last_name) VALUES 
 ('9d2d5751-e2ef-44e5-bbbe-8c2180515f22', 'darbhasantosh11@gmail.com', '$2a$10$rQZ8K9vJ8K9vJ8K9vJ8K9u', 'santosh', 'darbha')
@@ -157,6 +159,7 @@ ON CONFLICT (email) DO NOTHING;
 \d+ inventory_scans;
 \d+ cost_analyses;
 
-PRINT 'Database setup completed successfully!';
-PRINT 'All tables created with proper relationships and indexes.';
-PRINT 'Sample user created: darbhasantosh11@gmail.com (password: password123)';
+-- Success message
+SELECT 'Database setup completed successfully!' as message;
+SELECT 'All tables created with proper relationships and indexes.' as message;
+SELECT 'Sample user created: darbhasantosh11@gmail.com (password: 1101)' as message;

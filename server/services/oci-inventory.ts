@@ -83,10 +83,16 @@ export class OCIInventoryService {
     const tempFile = path.join('/tmp', `oci_credentials_${Date.now()}.json`);
     
     try {
+      // Parse credentials if they're a string, otherwise use as-is
+      let credentials = this.credentials;
+      if (typeof this.credentials === 'string') {
+        credentials = JSON.parse(this.credentials);
+      }
+      
       // Fix escaped newlines in private key for OCI SDK
       const fixedCredentials = {
-        ...this.credentials,
-        privateKey: this.credentials.privateKey.replace(/\\n/g, '\n')
+        ...credentials,
+        privateKey: credentials.privateKey ? credentials.privateKey.replace(/\\n/g, '\n') : credentials.privateKey
       };
       
       // Write credentials to temporary file
@@ -95,15 +101,16 @@ export class OCIInventoryService {
       // Get the path to the Python script
       const scriptPath = path.resolve(process.cwd(), 'server', 'services', 'oci-inventory.py');
       
-      // Execute Python script
+      // Execute Python script using virtual environment
       const { stdout, stderr } = await execAsync(
-        `python3 "${scriptPath}" --credentials "${tempFile}" --operation "${operation}"`
+        `.venv/bin/python3 "${scriptPath}" --credentials "${tempFile}" --operation "${operation}"`
       );
       
       if (stderr) {
         console.error('OCI Python stderr:', stderr);
       }
-      
+     
+
       // Parse the result
       const result = JSON.parse(stdout);
       
@@ -131,9 +138,12 @@ export class OCIInventoryService {
     const region = this.credentials?.region || 'unknown';
     const scanTime = new Date().toISOString();
 
+    // Extract resources from the Python script result
+    const resourceData = pythonResult.resources || pythonResult;
+
     // Convert compute instances
-    if (pythonResult.compute_instances) {
-      pythonResult.compute_instances.forEach((instance: any) => {
+    if (resourceData.compute_instances) {
+      resourceData.compute_instances.forEach((instance: any) => {
         resources.push({
           id: instance.id,
           name: instance.display_name,
@@ -152,8 +162,8 @@ export class OCIInventoryService {
     }
 
     // Convert block volumes
-    if (pythonResult.block_volumes) {
-      pythonResult.block_volumes.forEach((volume: any) => {
+    if (resourceData.block_volumes) {
+      resourceData.block_volumes.forEach((volume: any) => {
         resources.push({
           id: volume.id,
           name: volume.display_name,
@@ -171,8 +181,8 @@ export class OCIInventoryService {
     }
 
     // Convert object storage buckets
-    if (pythonResult.object_storage_buckets) {
-      pythonResult.object_storage_buckets.forEach((bucket: any) => {
+    if (resourceData.object_storage_buckets) {
+      resourceData.object_storage_buckets.forEach((bucket: any) => {
         resources.push({
           id: bucket.id,
           name: bucket.display_name,
@@ -189,8 +199,8 @@ export class OCIInventoryService {
     }
 
     // Convert autonomous databases
-    if (pythonResult.autonomous_databases) {
-      pythonResult.autonomous_databases.forEach((db: any) => {
+    if (resourceData.autonomous_databases) {
+      resourceData.autonomous_databases.forEach((db: any) => {
         resources.push({
           id: db.id,
           name: db.display_name,
@@ -207,8 +217,8 @@ export class OCIInventoryService {
     }
 
     // Convert load balancers
-    if (pythonResult.load_balancers) {
-      pythonResult.load_balancers.forEach((lb: any) => {
+    if (resourceData.load_balancers) {
+      resourceData.load_balancers.forEach((lb: any) => {
         resources.push({
           id: lb.id,
           name: lb.display_name,
@@ -226,8 +236,8 @@ export class OCIInventoryService {
     }
 
     // Convert VCNs
-    if (pythonResult.vcns) {
-      pythonResult.vcns.forEach((vcn: any) => {
+    if (resourceData.vcns) {
+      resourceData.vcns.forEach((vcn: any) => {
         resources.push({
           id: vcn.id,
           name: vcn.display_name,
